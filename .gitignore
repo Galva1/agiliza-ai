@@ -1,0 +1,13 @@
+# .NET
+backend/**/bin/
+backend/**/obj/
+*.user
+
+# IDEs
+.vs/
+.idea/
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
