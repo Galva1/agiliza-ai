@@ -12,7 +12,7 @@ export function Navbar() {
 
   return (
     <header className="navbar">
-      <div className="navbar-brand">Agiliza</div>
+      <div className="navbar-brand">Agiliza.ai</div>
       <nav className="navbar-links">
         <NavLink to="/" end>
           Chamados
