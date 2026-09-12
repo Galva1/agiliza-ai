@@ -2,8 +2,6 @@
 
 Sistema de HelpDesk simples chamado **Agiliza.ai**: front-end em React (Vite + TypeScript) e back-end em C# (.NET, ASP.NET Core Web API), com PostgreSQL como banco de dados.
 
-> Os nomes técnicos internos (projeto `HelpDesk.Api`, namespaces, tabelas do banco) permanecem como `HelpDesk` — apenas o nome de marca exibido nas telas, título da página e Swagger foi atualizado para "Agiliza.ai".
-
 ## Estrutura do repositório
 
 ```
