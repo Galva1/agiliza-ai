@@ -9,25 +9,60 @@ public static class DbSeeder
     public static async Task SeedAsync(AppDbContext db)
     {
         await db.Database.MigrateAsync();
+        await SeedTicketStatusesAsync(db);
+        await SeedAdminAsync(db);
+    }
 
-        var hasAdmin = await db.Users.AnyAsync(u => u.Role == UserRole.Admin);
+    private static async Task SeedTicketStatusesAsync(AppDbContext db)
+    {
+        var existingNames = await db.StatusChamados.Select(s => s.Nome).ToListAsync();
+
+        string[] defaultStatuses =
+        [
+            StatusChamadoNomes.Aberto,
+            StatusChamadoNomes.EmAndamento,
+            StatusChamadoNomes.Aguardando,
+            StatusChamadoNomes.Resolvido,
+            StatusChamadoNomes.Fechado
+        ];
+
+        foreach (var name in defaultStatuses)
+        {
+            if (!existingNames.Contains(name))
+            {
+                db.StatusChamados.Add(new StatusChamado
+                {
+                    Nome = name,
+                    Ativo = true,
+                    DataCriacao = DateTime.UtcNow
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedAdminAsync(AppDbContext db)
+    {
+        var hasAdmin = await db.Usuarios.AnyAsync(u => u.Perfil == Perfil.Admin);
         if (hasAdmin)
         {
             return;
         }
 
-        var admin = new User
+        var admin = new Usuario
         {
             Id = Guid.NewGuid(),
-            Name = "Administrador",
+            Nome = "Administrador",
             Email = "admin@helpdesk.local",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            Perfil = Perfil.Admin,
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow,
+            CriadoPorId = null
         };
 
-        db.Users.Add(admin);
+        db.Usuarios.Add(admin);
         await db.SaveChangesAsync();
     }
 }

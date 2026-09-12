@@ -4,5 +4,5 @@ namespace HelpDesk.Api.Services.Interfaces;
 
 public interface ITokenService
 {
-    (string Token, DateTime ExpiresAt) GenerateToken(User user);
+    (string Token, DateTime ExpiresAt) GenerateToken(Usuario user);
 }

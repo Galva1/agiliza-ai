@@ -1,6 +1,6 @@
 namespace HelpDesk.Api.Entities.Enums;
 
-public enum TicketPriority
+public enum Prioridade
 {
     Baixa = 1,
     Media = 2,

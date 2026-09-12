@@ -14,5 +14,5 @@ public class CreateUserRequest
     [Required, MinLength(6)]
     public string Password { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; } = UserRole.Solicitante;
+    public Perfil Role { get; set; } = Perfil.Solicitante;
 }

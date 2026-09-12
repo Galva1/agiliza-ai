@@ -1,6 +1,5 @@
 using HelpDesk.Api.Common.Extensions;
 using HelpDesk.Api.DTOs.Tickets;
-using HelpDesk.Api.Entities.Enums;
 using HelpDesk.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +19,17 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TicketDto>>> GetAll([FromQuery] TicketStatus? status)
+    public async Task<ActionResult<List<TicketDto>>> GetAll([FromQuery] string? status)
     {
         var userId = User.GetUserId();
         var role = User.GetUserRole();
         return Ok(await _ticketService.GetForUserAsync(userId, role, status));
+    }
+
+    [HttpGet("status")]
+    public async Task<ActionResult<List<TicketStatusDto>>> GetStatuses()
+    {
+        return Ok(await _ticketService.GetStatusesAsync());
     }
 
     [HttpGet("{id:guid}")]

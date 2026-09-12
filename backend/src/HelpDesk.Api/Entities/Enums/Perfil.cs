@@ -1,6 +1,6 @@
 namespace HelpDesk.Api.Entities.Enums;
 
-public enum UserRole
+public enum Perfil
 {
     Admin = 1,
     Agente = 2,
