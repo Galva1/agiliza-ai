@@ -4,5 +4,5 @@ namespace HelpDesk.Api.DTOs.Users;
 
 public class UpdateUserRoleRequest
 {
-    public UserRole Role { get; set; }
+    public Perfil Role { get; set; }
 }

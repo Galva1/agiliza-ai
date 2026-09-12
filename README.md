@@ -10,7 +10,7 @@ backend/                 Solução .NET (API)
   HelpDesk.slnx
   src/HelpDesk.Api/
     Controllers/          Endpoints HTTP (Auth, Users, Tickets)
-    Entities/              Entidades de domínio (User, Ticket, TicketComment) + Enums
+    Entities/              Entidades de domínio (Usuario, Chamado, ChamadoComentario, StatusChamado) + Enums (Perfil, Prioridade)
     DTOs/                  Objetos de transferência (request/response)
     Services/              Regras de negócio (Auth, Users, Tickets) + geração de JWT
     Data/                  DbContext, Migrations (EF Core) e Seeder
@@ -71,10 +71,37 @@ Acesse `http://localhost:5173`. O front já está configurado (`.env`) para fala
 
 - **Camadas simples**: `Controllers` → `Services` (interfaces + implementação) → `Data` (EF Core / `AppDbContext`), com `DTOs` isolando o que trafega pela API das `Entities` do banco.
 - **Autenticação stateless com JWT**: login em `POST /api/auth/login` gera um token assinado (HMAC-SHA256); os demais endpoints exigem `Authorization: Bearer <token>`.
-- **Autorização por perfil (role)**: enum `UserRole` (`Admin`, `Agente`, `Solicitante`) meio de `[Authorize(Roles = ...)]` nos controllers e checagens extras nos services (ex.: um Solicitante só vê os próprios chamados).
+- **Autorização por perfil (role)**: enum `Perfil` (`Admin`, `Agente`, `Solicitante`) via `[Authorize(Roles = ...)]` nos controllers e checagens extras nos services (ex.: um Solicitante só vê os próprios chamados).
 - **Senhas com hash (BCrypt)**: nunca armazenadas em texto puro.
 - **Tratamento de erros centralizado**: `ExceptionMiddleware` converte exceções de domínio (`NotFoundException`, `ForbiddenException`, `BusinessRuleException`, `AuthenticationException`) em respostas HTTP com status apropriado.
 - **Migrations code-first**: o schema do banco é versionado em `Data/Migrations` e aplicado automaticamente (`Database.MigrateAsync`) ao subir a API.
+
+## Convenção de nomenclatura do banco e das entidades
+
+As entidades C# (pasta `Entities/`) e o schema do banco (PostgreSQL) estão em português. O nome da tabela nem sempre é igual ao nome da classe (o mapeamento fica em `AppDbContext.OnModelCreating`, via Fluent API):
+
+| Entidade C#         | Tabela              | Observação |
+|----------------------|---------------------|------------|
+| `Usuario`             | `usuario`            | |
+| `Chamado`             | `ticket`             | tabela manteve o nome `ticket` |
+| `ChamadoComentario`   | `ticket_comentario`  | |
+| `StatusChamado`       | `ticket_status`      | domínio de status (ver abaixo) |
+| enum `Perfil`         | coluna `role` em `usuario` | |
+| enum `Prioridade`     | coluna `priority` em `ticket` | |
+
+Convenções de nome de coluna no banco:
+
+- **Chave primária**: `id` + nome da tabela — `idusuario`, `idticket`, `idticket_comentario` (exceção: `ticket_status` usa só `idstatus`).
+- **Colunas de auditoria**, presentes em quase toda tabela:
+  - `dt_criacao` / `usr_criacao` — data e usuário que criou o registro
+  - `dt_alteracao` / `usr_alteracao` — data e usuário da última alteração
+  - `ativo` — flag de registro ativo/inativo
+- Em `ticket_comentario`, `usr_criacao` (propriedade `AutorId` na entidade) já representa o autor do comentário — não existe coluna separada para isso.
+- **Status do chamado** deixou de ser um enum fixo no código e virou a entidade/tabela `StatusChamado` / `ticket_status` (`idstatus`, `nm_status`, `dt_criacao`, `ativo`) — permite renomear ou adicionar status sem precisar alterar/compilar o back-end. A API expõe `GET /api/tickets/status` para listar os status ativos.
+- **Prioridade** (enum `Prioridade`) e **perfil de usuário** (enum `Perfil`) continuam sendo colunas simples (inteiro), sem tabela própria — não foram pedidos como domínio dinâmico.
+- Os **DTOs** (`DTOs/`) e o contrato JSON da API permanecem em inglês/camelCase (`name`, `email`, `role`, `title`, `status`...) — são a camada de contrato consumida pelo front-end e não foram traduzidos, só as entidades internas.
+
+Ver [database/schema.sql](database/schema.sql) para o DDL completo comentado.
 
 ## Perfis de usuário (MVP)
 

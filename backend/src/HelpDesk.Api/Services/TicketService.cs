@@ -18,30 +18,31 @@ public class TicketService : ITicketService
         _db = db;
     }
 
-    public async Task<List<TicketDto>> GetForUserAsync(Guid userId, UserRole role, TicketStatus? status)
+    public async Task<List<TicketDto>> GetForUserAsync(Guid userId, Perfil role, string? statusName)
     {
-        var query = _db.Tickets
-            .Include(t => t.Requester)
-            .Include(t => t.Assignee)
+        var query = _db.Chamados
+            .Include(t => t.Solicitante)
+            .Include(t => t.Responsavel)
+            .Include(t => t.Status)
             .AsQueryable();
 
-        if (role == UserRole.Solicitante)
+        if (role == Perfil.Solicitante)
         {
-            query = query.Where(t => t.RequesterId == userId);
+            query = query.Where(t => t.SolicitanteId == userId);
         }
 
-        if (status.HasValue)
+        if (!string.IsNullOrWhiteSpace(statusName))
         {
-            query = query.Where(t => t.Status == status.Value);
+            query = query.Where(t => t.Status!.Nome == statusName);
         }
 
         return await query
-            .OrderByDescending(t => t.CreatedAt)
+            .OrderByDescending(t => t.DataCriacao)
             .Select(t => t.ToDto())
             .ToListAsync();
     }
 
-    public async Task<TicketDetailDto> GetByIdAsync(Guid ticketId, Guid userId, UserRole role)
+    public async Task<TicketDetailDto> GetByIdAsync(Guid ticketId, Guid userId, Perfil role)
     {
         var ticket = await FindTicketOrThrowAsync(ticketId, includeComments: true);
         EnsureCanView(ticket, userId, role);
@@ -50,108 +51,144 @@ public class TicketService : ITicketService
 
     public async Task<TicketDto> CreateAsync(CreateTicketRequest request, Guid requesterId)
     {
-        var ticket = new Ticket
+        var abertoStatusId = await GetStatusIdByNameAsync(StatusChamadoNomes.Aberto);
+
+        var ticket = new Chamado
         {
             Id = Guid.NewGuid(),
-            Title = request.Title.Trim(),
-            Description = request.Description.Trim(),
-            Priority = request.Priority,
-            Status = TicketStatus.Aberto,
-            RequesterId = requesterId,
-            CreatedAt = DateTime.UtcNow
+            Titulo = request.Title.Trim(),
+            Descricao = request.Description.Trim(),
+            Prioridade = request.Priority,
+            StatusChamadoId = abertoStatusId,
+            SolicitanteId = requesterId,
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow,
+            CriadoPorId = requesterId
         };
 
-        _db.Tickets.Add(ticket);
+        _db.Chamados.Add(ticket);
         await _db.SaveChangesAsync();
 
-        await _db.Entry(ticket).Reference(t => t.Requester).LoadAsync();
+        await _db.Entry(ticket).Reference(t => t.Solicitante).LoadAsync();
+        await _db.Entry(ticket).Reference(t => t.Status).LoadAsync();
 
         return ticket.ToDto();
     }
 
-    public async Task<TicketDto> UpdateAsync(Guid ticketId, UpdateTicketRequest request, Guid userId, UserRole role)
+    public async Task<TicketDto> UpdateAsync(Guid ticketId, UpdateTicketRequest request, Guid userId, Perfil role)
     {
-        if (role == UserRole.Solicitante)
+        if (role == Perfil.Solicitante)
         {
             throw new ForbiddenException("Solicitantes não podem alterar chamados.");
         }
 
         var ticket = await FindTicketOrThrowAsync(ticketId, includeComments: false);
+        var hasChanges = false;
 
         if (request.AssigneeId.HasValue)
         {
-            var assigneeExists = await _db.Users.AnyAsync(u =>
+            var assigneeExists = await _db.Usuarios.AnyAsync(u =>
                 u.Id == request.AssigneeId.Value &&
-                u.IsActive &&
-                (u.Role == UserRole.Agente || u.Role == UserRole.Admin));
+                u.Ativo &&
+                (u.Perfil == Perfil.Agente || u.Perfil == Perfil.Admin));
 
             if (!assigneeExists)
             {
                 throw new BusinessRuleException("Responsável inválido. Selecione um agente ativo.");
             }
 
-            ticket.AssigneeId = request.AssigneeId.Value;
+            ticket.ResponsavelId = request.AssigneeId.Value;
+            hasChanges = true;
         }
 
         if (request.Priority.HasValue)
         {
-            ticket.Priority = request.Priority.Value;
+            ticket.Prioridade = request.Priority.Value;
+            hasChanges = true;
         }
 
-        if (request.Status.HasValue)
+        if (!string.IsNullOrWhiteSpace(request.Status))
         {
-            ticket.Status = request.Status.Value;
-            ticket.ClosedAt = request.Status.Value == TicketStatus.Fechado
+            ticket.StatusChamadoId = await GetStatusIdByNameAsync(request.Status);
+            ticket.DataFechamento = request.Status == StatusChamadoNomes.Fechado
                 ? DateTime.UtcNow
                 : null;
+            hasChanges = true;
         }
 
-        ticket.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-
-        await _db.Entry(ticket).Reference(t => t.Requester).LoadAsync();
-        if (ticket.AssigneeId.HasValue)
+        if (hasChanges)
         {
-            await _db.Entry(ticket).Reference(t => t.Assignee).LoadAsync();
+            ticket.DataAlteracao = DateTime.UtcNow;
+            ticket.AlteradoPorId = userId;
+            await _db.SaveChangesAsync();
+        }
+
+        await _db.Entry(ticket).Reference(t => t.Solicitante).LoadAsync();
+        await _db.Entry(ticket).Reference(t => t.Status).LoadAsync();
+        if (ticket.ResponsavelId.HasValue)
+        {
+            await _db.Entry(ticket).Reference(t => t.Responsavel).LoadAsync();
         }
 
         return ticket.ToDto();
     }
 
-    public async Task<TicketCommentDto> AddCommentAsync(Guid ticketId, CreateCommentRequest request, Guid userId, UserRole role)
+    public async Task<TicketCommentDto> AddCommentAsync(Guid ticketId, CreateCommentRequest request, Guid userId, Perfil role)
     {
         var ticket = await FindTicketOrThrowAsync(ticketId, includeComments: false);
         EnsureCanView(ticket, userId, role);
 
-        var comment = new TicketComment
+        var comment = new ChamadoComentario
         {
             Id = Guid.NewGuid(),
-            TicketId = ticketId,
-            UserId = userId,
-            Message = request.Message.Trim(),
-            CreatedAt = DateTime.UtcNow
+            ChamadoId = ticketId,
+            AutorId = userId,
+            Mensagem = request.Message.Trim(),
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow
         };
 
-        _db.TicketComments.Add(comment);
+        _db.ChamadoComentarios.Add(comment);
 
-        ticket.UpdatedAt = DateTime.UtcNow;
+        ticket.DataAlteracao = DateTime.UtcNow;
+        ticket.AlteradoPorId = userId;
 
         await _db.SaveChangesAsync();
-        await _db.Entry(comment).Reference(c => c.User).LoadAsync();
+        await _db.Entry(comment).Reference(c => c.Autor).LoadAsync();
 
         return comment.ToDto();
     }
 
-    private async Task<Ticket> FindTicketOrThrowAsync(Guid ticketId, bool includeComments)
+    public async Task<List<TicketStatusDto>> GetStatusesAsync()
     {
-        var query = _db.Tickets
-            .Include(t => t.Requester)
-            .Include(t => t.Assignee)
+        return await _db.StatusChamados
+            .Where(s => s.Ativo)
+            .OrderBy(s => s.Id)
+            .Select(s => s.ToDto())
+            .ToListAsync();
+    }
+
+    private async Task<int> GetStatusIdByNameAsync(string name)
+    {
+        var status = await _db.StatusChamados.FirstOrDefaultAsync(s => s.Nome == name && s.Ativo);
+        if (status is null)
+        {
+            throw new BusinessRuleException($"Status '{name}' não existe ou está inativo.");
+        }
+        return status.Id;
+    }
+
+    private async Task<Chamado> FindTicketOrThrowAsync(Guid ticketId, bool includeComments)
+    {
+        var query = _db.Chamados
+            .Include(t => t.Solicitante)
+            .Include(t => t.Responsavel)
+            .Include(t => t.Status)
             .AsQueryable();
 
         if (includeComments)
         {
-            query = query.Include(t => t.Comments).ThenInclude(c => c.User);
+            query = query.Include(t => t.Comentarios).ThenInclude(c => c.Autor);
         }
 
         var ticket = await query.FirstOrDefaultAsync(t => t.Id == ticketId);
@@ -163,9 +200,9 @@ public class TicketService : ITicketService
         return ticket;
     }
 
-    private static void EnsureCanView(Ticket ticket, Guid userId, UserRole role)
+    private static void EnsureCanView(Chamado ticket, Guid userId, Perfil role)
     {
-        if (role == UserRole.Solicitante && ticket.RequesterId != userId)
+        if (role == Perfil.Solicitante && ticket.SolicitanteId != userId)
         {
             throw new ForbiddenException("Você não tem permissão para acessar este chamado.");
         }

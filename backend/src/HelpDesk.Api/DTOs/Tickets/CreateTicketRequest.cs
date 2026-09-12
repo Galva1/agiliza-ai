@@ -11,5 +11,5 @@ public class CreateTicketRequest
     [Required]
     public string Description { get; set; } = string.Empty;
 
-    public TicketPriority Priority { get; set; } = TicketPriority.Media;
+    public Prioridade Priority { get; set; } = Prioridade.Media;
 }

@@ -20,8 +20,8 @@ public class UserService : IUserService
 
     public async Task<List<UserDto>> GetAllAsync()
     {
-        return await _db.Users
-            .OrderBy(u => u.Name)
+        return await _db.Usuarios
+            .OrderBy(u => u.Nome)
             .Select(u => u.ToDto())
             .ToListAsync();
     }
@@ -32,47 +32,50 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<UserDto> CreateAsync(CreateUserRequest request)
+    public async Task<UserDto> CreateAsync(CreateUserRequest request, Guid createdByUserId)
     {
         var email = request.Email.Trim().ToLower();
 
-        var emailInUse = await _db.Users.AnyAsync(u => u.Email == email);
+        var emailInUse = await _db.Usuarios.AnyAsync(u => u.Email == email);
         if (emailInUse)
         {
             throw new BusinessRuleException("Já existe um usuário com este e-mail.");
         }
 
-        var user = new User
+        var user = new Usuario
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Nome = request.Name.Trim(),
             Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = request.Role,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Perfil = request.Role,
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow,
+            CriadoPorId = createdByUserId
         };
 
-        _db.Users.Add(user);
+        _db.Usuarios.Add(user);
         await _db.SaveChangesAsync();
 
         return user.ToDto();
     }
 
-    public async Task<UserDto> UpdateRoleAsync(Guid id, UserRole role)
+    public async Task<UserDto> UpdateRoleAsync(Guid id, Perfil role, Guid updatedByUserId)
     {
         var user = await FindUserOrThrowAsync(id);
-        user.Role = role;
-        user.UpdatedAt = DateTime.UtcNow;
+        user.Perfil = role;
+        user.DataAlteracao = DateTime.UtcNow;
+        user.AlteradoPorId = updatedByUserId;
         await _db.SaveChangesAsync();
         return user.ToDto();
     }
 
-    public async Task<UserDto> UpdateStatusAsync(Guid id, bool isActive)
+    public async Task<UserDto> UpdateStatusAsync(Guid id, bool isActive, Guid updatedByUserId)
     {
         var user = await FindUserOrThrowAsync(id);
-        user.IsActive = isActive;
-        user.UpdatedAt = DateTime.UtcNow;
+        user.Ativo = isActive;
+        user.DataAlteracao = DateTime.UtcNow;
+        user.AlteradoPorId = updatedByUserId;
         await _db.SaveChangesAsync();
         return user.ToDto();
     }
@@ -80,36 +83,37 @@ public class UserService : IUserService
     public async Task<UserDto> UpdateMyProfileAsync(Guid id, UpdateMyProfileRequest request)
     {
         var user = await FindUserOrThrowAsync(id);
-        user.Name = request.Name.Trim();
+        user.Nome = request.Name.Trim();
 
         if (!string.IsNullOrWhiteSpace(request.NewPassword))
         {
             if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
-                !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+                !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.SenhaHash))
             {
                 throw new BusinessRuleException("Senha atual inválida.");
             }
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         }
 
-        user.UpdatedAt = DateTime.UtcNow;
+        user.DataAlteracao = DateTime.UtcNow;
+        user.AlteradoPorId = id;
         await _db.SaveChangesAsync();
         return user.ToDto();
     }
 
     public async Task<List<UserDto>> GetAssignableAgentsAsync()
     {
-        return await _db.Users
-            .Where(u => u.IsActive && (u.Role == UserRole.Agente || u.Role == UserRole.Admin))
-            .OrderBy(u => u.Name)
+        return await _db.Usuarios
+            .Where(u => u.Ativo && (u.Perfil == Perfil.Agente || u.Perfil == Perfil.Admin))
+            .OrderBy(u => u.Nome)
             .Select(u => u.ToDto())
             .ToListAsync();
     }
 
-    private async Task<User> FindUserOrThrowAsync(Guid id)
+    private async Task<Usuario> FindUserOrThrowAsync(Guid id)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
         if (user is null)
         {
             throw new NotFoundException("Usuário não encontrado.");

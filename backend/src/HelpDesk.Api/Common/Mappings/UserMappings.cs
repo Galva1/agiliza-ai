@@ -5,13 +5,13 @@ namespace HelpDesk.Api.Common.Mappings;
 
 public static class UserMappings
 {
-    public static UserDto ToDto(this User user) => new()
+    public static UserDto ToDto(this Usuario user) => new()
     {
         Id = user.Id,
-        Name = user.Name,
+        Name = user.Nome,
         Email = user.Email,
-        Role = user.Role,
-        IsActive = user.IsActive,
-        CreatedAt = user.CreatedAt
+        Role = user.Perfil,
+        IsActive = user.Ativo,
+        CreatedAt = user.DataCriacao
     };
 }
