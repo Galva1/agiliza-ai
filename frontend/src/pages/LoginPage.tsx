@@ -31,7 +31,7 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Agiliza</h1>
+        <h1>Agiliza.ai</h1>
         <p className="text-muted">Entre com suas credenciais para continuar.</p>
 
         {error && <div className="alert alert-error">{error}</div>}
