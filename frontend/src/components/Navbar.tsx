@@ -26,10 +26,25 @@ export function Navbar() {
     }`;
 
   return (
+<<<<<<< HEAD
     <header className="border-b border-surface-200 bg-white/90 backdrop-blur dark:border-surface-800 dark:bg-surface-900/90">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <span className="text-lg font-extrabold tracking-tight text-brand-700 dark:text-brand-300">
           Agiliza
+=======
+    <header className="navbar">
+      <div className="navbar-brand">Agiliza.ai</div>
+      <nav className="navbar-links">
+        <NavLink to="/" end>
+          Chamados
+        </NavLink>
+        {user?.role === "Admin" && <NavLink to="/usuarios">Usuários</NavLink>}
+        <NavLink to="/perfil">Meu perfil</NavLink>
+      </nav>
+      <div className="navbar-user">
+        <span>
+          {user?.name} <small>({user?.role})</small>
+>>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         </span>
 
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto">

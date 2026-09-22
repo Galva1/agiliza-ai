@@ -3,6 +3,7 @@ using System;
 using HelpDesk.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HelpDesk.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260912191348_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,101 +25,11 @@ namespace HelpDesk.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-<<<<<<< HEAD
-            modelBuilder.Entity("HelpDesk.Api.Entities.Categoria", b =>
-=======
-            modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-<<<<<<< HEAD
-                        .HasColumnName("id_categoria");
-
-                    b.Property<bool>("Ativa")
-                        .HasColumnType("boolean")
-                        .HasColumnName("fl_ativo");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_cadastro");
-
-                    b.Property<string>("Descricao")
-                        .HasColumnType("text")
-                        .HasColumnName("ds_categoria");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("nm_categoria");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("categorias", (string)null);
-                });
-
             modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id_chamado");
-
-                    b.Property<DateTime?>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_atualizacao");
-
-                    b.Property<Guid?>("CategoriaId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_categoria");
-
-                    b.Property<DateTime?>("ConcluidoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_conclusao");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_cadastro");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ds_descricao");
-
-                    b.Property<DateTime?>("FechadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_fechamento");
-
-                    b.Property<int>("Prioridade")
-                        .HasColumnType("integer")
-                        .HasColumnName("id_prioridade");
-
-                    b.Property<string>("Resolucao")
-                        .HasColumnType("text")
-                        .HasColumnName("ds_resolucao");
-
-                    b.Property<bool>("ResolucaoAprovada")
-                        .HasColumnType("boolean")
-                        .HasColumnName("fl_resolucao_aprovada");
-
-                    b.Property<DateTime?>("ResolucaoPropostaEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_resolucao");
-
-                    b.Property<Guid>("SolicitanteId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_usuario_solicitante");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("id_status");
-
-                    b.Property<Guid?>("TecnicoId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_usuario_tecnico");
-=======
                         .HasColumnName("idticket");
 
                     b.Property<Guid?>("AlteradoPorId")
@@ -163,28 +76,11 @@ namespace HelpDesk.Api.Data.Migrations
                     b.Property<int>("StatusChamadoId")
                         .HasColumnType("integer")
                         .HasColumnName("idstatus");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-<<<<<<< HEAD
-                        .HasColumnName("nm_titulo");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoriaId");
-
-                    b.HasIndex("SolicitanteId");
-
-                    b.HasIndex("TecnicoId");
-
-                    b.ToTable("chamados", (string)null);
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.ComentarioChamado", b =>
-=======
                         .HasColumnName("titulo");
 
                     b.HasKey("Id");
@@ -203,22 +99,10 @@ namespace HelpDesk.Api.Data.Migrations
                 });
 
             modelBuilder.Entity("HelpDesk.Api.Entities.ChamadoComentario", b =>
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-<<<<<<< HEAD
-                        .HasColumnName("id_comentario");
-
-                    b.Property<Guid>("ChamadoId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_chamado");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_cadastro");
-=======
                         .HasColumnName("idticket_comentario");
 
                     b.Property<Guid?>("AlteradoPorId")
@@ -244,29 +128,10 @@ namespace HelpDesk.Api.Data.Migrations
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("dt_criacao");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.Property<string>("Mensagem")
                         .IsRequired()
                         .HasColumnType("text")
-<<<<<<< HEAD
-                        .HasColumnName("ds_mensagem");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_usuario");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChamadoId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("comentarios_chamado", (string)null);
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.HistoricoChamado", b =>
-=======
                         .HasColumnName("mensagem");
 
                     b.HasKey("Id");
@@ -312,68 +177,10 @@ namespace HelpDesk.Api.Data.Migrations
                 });
 
             modelBuilder.Entity("HelpDesk.Api.Entities.Usuario", b =>
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-<<<<<<< HEAD
-                        .HasColumnName("id_historico");
-
-                    b.Property<string>("Acao")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("nm_acao");
-
-                    b.Property<Guid>("ChamadoId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_chamado");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_cadastro");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_usuario");
-
-                    b.Property<string>("ValorAnterior")
-                        .HasColumnType("text")
-                        .HasColumnName("ds_valor_anterior");
-
-                    b.Property<string>("ValorNovo")
-                        .HasColumnType("text")
-                        .HasColumnName("ds_valor_novo");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChamadoId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("historico_chamado", (string)null);
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.Usuario", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id_usuario");
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("boolean")
-                        .HasColumnName("fl_ativo");
-
-                    b.Property<DateTime?>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_atualizacao");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("dt_cadastro");
-=======
                         .HasColumnName("idusuario");
 
                     b.Property<Guid?>("AlteradoPorId")
@@ -395,44 +202,27 @@ namespace HelpDesk.Api.Data.Migrations
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("dt_criacao");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-<<<<<<< HEAD
-                        .HasColumnName("ds_email");
-=======
                         .HasColumnName("email");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
-<<<<<<< HEAD
-                        .HasColumnName("nm_usuario");
-
-                    b.Property<int>("Perfil")
-                        .HasColumnType("integer")
-                        .HasColumnName("id_perfil");
-=======
                         .HasColumnName("nome");
 
                     b.Property<int>("Perfil")
                         .HasColumnType("integer")
                         .HasColumnName("role");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasColumnType("text")
-<<<<<<< HEAD
-                        .HasColumnName("ds_senha_hash");
-=======
                         .HasColumnName("senhaHash");
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
 
                     b.HasKey("Id");
 
@@ -443,22 +233,11 @@ namespace HelpDesk.Api.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-<<<<<<< HEAD
-                    b.ToTable("usuarios", (string)null);
-=======
                     b.ToTable("usuario", (string)null);
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                 });
 
             modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
                 {
-<<<<<<< HEAD
-                    b.HasOne("HelpDesk.Api.Entities.Categoria", "Categoria")
-                        .WithMany("Chamados")
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-=======
                     b.HasOne("HelpDesk.Api.Entities.Usuario", null)
                         .WithMany()
                         .HasForeignKey("AlteradoPorId")
@@ -474,29 +253,12 @@ namespace HelpDesk.Api.Data.Migrations
                         .HasForeignKey("ResponsavelId")
                         .OnDelete(DeleteBehavior.Restrict);
 
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                     b.HasOne("HelpDesk.Api.Entities.Usuario", "Solicitante")
                         .WithMany("ChamadosSolicitados")
                         .HasForeignKey("SolicitanteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-<<<<<<< HEAD
-                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Tecnico")
-                        .WithMany("ChamadosAtribuidos")
-                        .HasForeignKey("TecnicoId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Categoria");
-
-                    b.Navigation("Solicitante");
-
-                    b.Navigation("Tecnico");
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.ComentarioChamado", b =>
-                {
-=======
                     b.HasOne("HelpDesk.Api.Entities.StatusChamado", "Status")
                         .WithMany()
                         .HasForeignKey("StatusChamadoId")
@@ -523,61 +285,12 @@ namespace HelpDesk.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                     b.HasOne("HelpDesk.Api.Entities.Chamado", "Chamado")
                         .WithMany("Comentarios")
                         .HasForeignKey("ChamadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-<<<<<<< HEAD
-                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Usuario")
-                        .WithMany("Comentarios")
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Chamado");
-
-                    b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.HistoricoChamado", b =>
-                {
-                    b.HasOne("HelpDesk.Api.Entities.Chamado", "Chamado")
-                        .WithMany("Historico")
-                        .HasForeignKey("ChamadoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Chamado");
-
-                    b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.Categoria", b =>
-                {
-                    b.Navigation("Chamados");
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
-                {
-                    b.Navigation("Comentarios");
-
-                    b.Navigation("Historico");
-                });
-
-            modelBuilder.Entity("HelpDesk.Api.Entities.Usuario", b =>
-                {
-                    b.Navigation("ChamadosAtribuidos");
-
-=======
                     b.Navigation("Autor");
 
                     b.Navigation("Chamado");
@@ -605,7 +318,6 @@ namespace HelpDesk.Api.Data.Migrations
                 {
                     b.Navigation("ChamadosAtribuidos");
 
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
                     b.Navigation("ChamadosSolicitados");
 
                     b.Navigation("Comentarios");
