@@ -1,58 +1,102 @@
-// Estes tipos espelham os DTOs do backend (HelpDesk.Api/DTOs).
-// Os enums são transmitidos pela API como texto (JsonStringEnumConverter),
-// então os valores aqui são strings, não números.
+export type PerfilUsuario = "Administrador" | "Tecnico" | "Solicitante";
 
-export type UserRole = "Admin" | "Agente" | "Solicitante";
-
-export type TicketStatus =
+export type StatusChamado =
   | "Aberto"
   | "EmAndamento"
   | "Aguardando"
   | "Resolvido"
   | "Fechado";
 
-export type TicketPriority = "Baixa" | "Media" | "Alta" | "Urgente";
+export type PrioridadeChamado = "Baixa" | "Media" | "Alta" | "Urgente";
 
-export interface User {
+export type AcaoHistorico =
+  | "status"
+  | "prioridade"
+  | "categoria"
+  | "tecnico"
+  | "comentario"
+  | "resolucao_proposta"
+  | "resolucao_aprovada";
+
+export interface Usuario {
   id: string;
-  name: string;
+  nome: string;
   email: string;
-  role: UserRole;
-  isActive: boolean;
-  createdAt: string;
+  perfil: PerfilUsuario;
+  ativo: boolean;
+  criadoEm: string;
 }
 
 export interface LoginResponse {
   token: string;
-  expiresAt: string;
-  user: User;
+  expiraEm: string;
+  usuario: Usuario;
 }
 
-export interface Ticket {
+export interface Categoria {
   id: string;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  requesterId: string;
-  requesterName: string;
-  assigneeId: string | null;
-  assigneeName: string | null;
-  createdAt: string;
-  updatedAt: string | null;
-  closedAt: string | null;
+  nome: string;
+  descricao: string | null;
+  ativa: boolean;
+  criadoEm: string;
 }
 
-export interface TicketComment {
+export interface Chamado {
   id: string;
-  userId: string;
-  userName: string;
-  message: string;
-  createdAt: string;
+  titulo: string;
+  descricao: string;
+  status: StatusChamado;
+  prioridade: PrioridadeChamado;
+  categoriaId: string | null;
+  categoriaNome: string | null;
+  solicitanteId: string;
+  solicitanteNome: string;
+  tecnicoId: string | null;
+  tecnicoNome: string | null;
+  resolucao: string | null;
+  resolucaoAprovada: boolean;
+  resolucaoPropostaEm: string | null;
+  concluidoEm: string | null;
+  criadoEm: string;
+  atualizadoEm: string | null;
+  fechadoEm: string | null;
 }
 
-export interface TicketDetail extends Ticket {
-  comments: TicketComment[];
+export interface ComentarioChamado {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  mensagem: string;
+  criadoEm: string;
+}
+
+export interface HistoricoChamado {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  acao: AcaoHistorico;
+  valorAnterior: string | null;
+  valorNovo: string | null;
+  criadoEm: string;
+}
+
+export interface ChamadoDetalhe extends Chamado {
+  comentarios: ComentarioChamado[];
+  historico: HistoricoChamado[];
+}
+
+export interface Pagina<T> {
+  itens: T[];
+  paginaAtual: number;
+  tamanhoPagina: number;
+  totalItens: number;
+  totalPaginas: number;
+}
+
+export interface PainelChamados {
+  abertos: Pagina<Chamado>;
+  atribuidos: Pagina<Chamado>;
+  concluidos: Pagina<Chamado>;
 }
 
 export interface ApiErrorBody {

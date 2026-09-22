@@ -9,7 +9,7 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [senha, setSenha] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -19,7 +19,7 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
+      await login(email, senha);
       navigate("/");
     } catch (err) {
       setError(getApiErrorMessage(err, "E-mail ou senha inválidos."));
@@ -29,17 +29,23 @@ export function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Agiliza</h1>
-        <p className="text-muted">Entre com suas credenciais para continuar.</p>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-surface-100 px-4 dark:from-surface-950 dark:via-surface-950 dark:to-surface-900">
+      <form
+        className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-8 shadow-lg dark:border-surface-800 dark:bg-surface-900"
+        onSubmit={handleSubmit}
+      >
+        <h1 className="text-2xl font-extrabold text-brand-700 dark:text-brand-300">Agiliza</h1>
+        <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
+          Entre com suas credenciais para continuar.
+        </p>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert-error mt-4">{error}</div>}
 
-        <label className="field">
-          <span>E-mail</span>
+        <label className="mt-5 flex flex-col gap-1.5">
+          <span className="field-label">E-mail</span>
           <input
             type="email"
+            className="field-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -47,17 +53,18 @@ export function LoginPage() {
           />
         </label>
 
-        <label className="field">
-          <span>Senha</span>
+        <label className="mt-4 flex flex-col gap-1.5">
+          <span className="field-label">Senha</span>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            className="field-input"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
             required
           />
         </label>
 
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+        <button type="submit" className="btn-primary mt-6 w-full" disabled={isSubmitting}>
           {isSubmitting ? "Entrando..." : "Entrar"}
         </button>
       </form>

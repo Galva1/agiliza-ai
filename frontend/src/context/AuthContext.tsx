@@ -2,13 +2,13 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { TOKEN_STORAGE_KEY } from "../api/apiClient";
 import { login as loginRequest } from "../api/authApi";
-import { getMe } from "../api/usersApi";
-import type { User } from "../types";
+import { getMe } from "../api/usuariosApi";
+import type { Usuario } from "../types";
 
 interface AuthContextValue {
-  user: User | null;
+  user: Usuario | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, senha: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -16,7 +16,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Usuario | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,10 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await loginRequest(email, password);
+  const login = async (email: string, senha: string) => {
+    const response = await loginRequest(email, senha);
     localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
-    setUser(response.user);
+    setUser(response.usuario);
   };
 
   const logout = () => {

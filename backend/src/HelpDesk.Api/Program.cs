@@ -21,8 +21,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ---- Services (DI) ----
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IChamadoService, ChamadoService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // ---- Auth (JWT) ----

@@ -1,4 +1,4 @@
-using HelpDesk.Api.DTOs.Auth;
+using HelpDesk.Api.DTOs.Autenticacao;
 
 namespace HelpDesk.Api.Services.Interfaces;
 

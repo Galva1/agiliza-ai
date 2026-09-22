@@ -1,15 +1,21 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
-import { updateMe } from "../api/usersApi";
+import { updateMe } from "../api/usuariosApi";
 import { getApiErrorMessage } from "../api/apiClient";
+
+const PERFIL_LABELS: Record<string, string> = {
+  Administrador: "Administrador",
+  Tecnico: "Técnico",
+  Solicitante: "Solicitante",
+};
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
 
-  const [name, setName] = useState(user?.name ?? "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [nome, setNome] = useState(user?.nome ?? "");
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,13 +30,13 @@ export function ProfilePage() {
 
     try {
       await updateMe({
-        name,
-        currentPassword: currentPassword || undefined,
-        newPassword: newPassword || undefined,
+        nome,
+        senhaAtual: senhaAtual || undefined,
+        novaSenha: novaSenha || undefined,
       });
       await refreshUser();
-      setCurrentPassword("");
-      setNewPassword("");
+      setSenhaAtual("");
+      setNovaSenha("");
       setSuccess("Perfil atualizado com sucesso.");
     } catch (err) {
       setError(getApiErrorMessage(err, "Não foi possível atualizar o perfil."));
@@ -40,54 +46,60 @@ export function ProfilePage() {
   };
 
   return (
-    <div className="page">
-      <h1>Meu perfil</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Meu perfil</h1>
 
       <div className="card">
-        <dl className="ticket-meta">
-          <dt>E-mail</dt>
-          <dd>{user.email}</dd>
-          <dt>Perfil</dt>
-          <dd>{user.role}</dd>
-          <dt>Membro desde</dt>
-          <dd>{new Date(user.createdAt).toLocaleDateString("pt-BR")}</dd>
+        <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+          <dt className="text-surface-500 dark:text-surface-400">E-mail</dt>
+          <dd className="text-surface-900 dark:text-surface-100">{user.email}</dd>
+          <dt className="text-surface-500 dark:text-surface-400">Perfil</dt>
+          <dd className="text-surface-900 dark:text-surface-100">{PERFIL_LABELS[user.perfil]}</dd>
+          <dt className="text-surface-500 dark:text-surface-400">Membro desde</dt>
+          <dd className="text-surface-900 dark:text-surface-100">
+            {new Date(user.criadoEm).toLocaleDateString("pt-BR")}
+          </dd>
         </dl>
       </div>
 
-      <form className="card form" onSubmit={handleSubmit}>
-        <h2>Editar dados</h2>
+      <form className="card flex flex-col gap-4" onSubmit={handleSubmit}>
+        <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Editar dados</h2>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
+        {error && <div className="alert-error">{error}</div>}
+        {success && <div className="alert-success">{success}</div>}
 
-        <label className="field">
-          <span>Nome</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <label className="flex flex-col gap-1.5">
+          <span className="field-label">Nome</span>
+          <input className="field-input" value={nome} onChange={(e) => setNome(e.target.value)} required />
         </label>
 
-        <p className="text-muted">Preencha os campos abaixo apenas se quiser trocar a senha.</p>
+        <p className="text-sm text-surface-500 dark:text-surface-400">
+          Preencha os campos abaixo apenas se quiser trocar a senha.
+        </p>
 
-        <div className="form-row">
-          <label className="field">
-            <span>Senha atual</span>
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="field-label">Senha atual</span>
             <input
               type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="field-input"
+              value={senhaAtual}
+              onChange={(e) => setSenhaAtual(e.target.value)}
             />
           </label>
-          <label className="field">
-            <span>Nova senha</span>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="field-label">Nova senha</span>
             <input
               type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              className="field-input"
+              value={novaSenha}
+              onChange={(e) => setNovaSenha(e.target.value)}
               minLength={6}
             />
           </label>
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+        <button type="submit" className="btn-primary self-start" disabled={isSubmitting}>
           {isSubmitting ? "Salvando..." : "Salvar alterações"}
         </button>
       </form>

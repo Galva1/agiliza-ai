@@ -1,6 +1,23 @@
 @HelpDesk.Api_HostAddress = http://localhost:5109
 
-GET {{HelpDesk.Api_HostAddress}}/weatherforecast/
+POST {{HelpDesk.Api_HostAddress}}/api/autenticacao/login
+Content-Type: application/json
+
+{
+  "email": "admin@helpdesk.local",
+  "senha": "Admin@123"
+}
+
+###
+
+GET {{HelpDesk.Api_HostAddress}}/api/chamados
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+GET {{HelpDesk.Api_HostAddress}}/api/chamados/painel
+Accept: application/json
+Authorization: Bearer {{token}}
 
 ###

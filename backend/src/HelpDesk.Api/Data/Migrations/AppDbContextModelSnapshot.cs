@@ -22,168 +22,318 @@ namespace HelpDesk.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.Categoria", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_categoria");
 
-                    b.Property<Guid?>("AssigneeId")
-                        .HasColumnType("uuid");
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fl_ativo");
 
-                    b.Property<DateTime?>("ClosedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_cadastro");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text")
+                        .HasColumnName("ds_categoria");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Nome")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nm_categoria");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("integer");
+                    b.HasKey("Id");
 
-                    b.Property<Guid>("RequesterId")
-                        .HasColumnType("uuid");
+                    b.ToTable("categorias", (string)null);
+                });
+
+            modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_chamado");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_atualizacao");
+
+                    b.Property<Guid?>("CategoriaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_categoria");
+
+                    b.Property<DateTime?>("ConcluidoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_conclusao");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_cadastro");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ds_descricao");
+
+                    b.Property<DateTime?>("FechadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_fechamento");
+
+                    b.Property<int>("Prioridade")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_prioridade");
+
+                    b.Property<string>("Resolucao")
+                        .HasColumnType("text")
+                        .HasColumnName("ds_resolucao");
+
+                    b.Property<bool>("ResolucaoAprovada")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fl_resolucao_aprovada");
+
+                    b.Property<DateTime?>("ResolucaoPropostaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_resolucao");
+
+                    b.Property<Guid>("SolicitanteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario_solicitante");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("id_status");
 
-                    b.Property<string>("Title")
+                    b.Property<Guid?>("TecnicoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario_tecnico");
+
+                    b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nm_titulo");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssigneeId");
+                    b.HasIndex("CategoriaId");
 
-                    b.HasIndex("RequesterId");
+                    b.HasIndex("SolicitanteId");
 
-                    b.ToTable("tickets", (string)null);
+                    b.HasIndex("TecnicoId");
+
+                    b.ToTable("chamados", (string)null);
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.TicketComment", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.ComentarioChamado", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_comentario");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("ChamadoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_chamado");
 
-                    b.Property<string>("Message")
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_cadastro");
+
+                    b.Property<string>("Mensagem")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("ds_mensagem");
 
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TicketId");
+                    b.HasIndex("ChamadoId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UsuarioId");
 
-                    b.ToTable("ticket_comments", (string)null);
+                    b.ToTable("comentarios_chamado", (string)null);
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.User", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.HistoricoChamado", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_historico");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Acao")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("nm_acao");
+
+                    b.Property<Guid>("ChamadoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_chamado");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_cadastro");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario");
+
+                    b.Property<string>("ValorAnterior")
+                        .HasColumnType("text")
+                        .HasColumnName("ds_valor_anterior");
+
+                    b.Property<string>("ValorNovo")
+                        .HasColumnType("text")
+                        .HasColumnName("ds_valor_novo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChamadoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("historico_chamado", (string)null);
+                });
+
+            modelBuilder.Entity("HelpDesk.Api.Entities.Usuario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fl_ativo");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_atualizacao");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_cadastro");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("ds_email");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nm_usuario");
 
-                    b.Property<string>("PasswordHash")
+                    b.Property<int>("Perfil")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_perfil");
+
+                    b.Property<string>("SenhaHash")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("text")
+                        .HasColumnName("ds_senha_hash");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("usuarios", (string)null);
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
                 {
-                    b.HasOne("HelpDesk.Api.Entities.User", "Assignee")
-                        .WithMany("TicketsAssigned")
-                        .HasForeignKey("AssigneeId")
+                    b.HasOne("HelpDesk.Api.Entities.Categoria", "Categoria")
+                        .WithMany("Chamados")
+                        .HasForeignKey("CategoriaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("HelpDesk.Api.Entities.User", "Requester")
-                        .WithMany("TicketsCreated")
-                        .HasForeignKey("RequesterId")
+                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Solicitante")
+                        .WithMany("ChamadosSolicitados")
+                        .HasForeignKey("SolicitanteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Assignee");
+                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Tecnico")
+                        .WithMany("ChamadosAtribuidos")
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Requester");
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Solicitante");
+
+                    b.Navigation("Tecnico");
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.TicketComment", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.ComentarioChamado", b =>
                 {
-                    b.HasOne("HelpDesk.Api.Entities.Ticket", "Ticket")
-                        .WithMany("Comments")
-                        .HasForeignKey("TicketId")
+                    b.HasOne("HelpDesk.Api.Entities.Chamado", "Chamado")
+                        .WithMany("Comentarios")
+                        .HasForeignKey("ChamadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HelpDesk.Api.Entities.User", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("UserId")
+                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Usuario")
+                        .WithMany("Comentarios")
+                        .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Ticket");
+                    b.Navigation("Chamado");
 
-                    b.Navigation("User");
+                    b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.HistoricoChamado", b =>
                 {
-                    b.Navigation("Comments");
+                    b.HasOne("HelpDesk.Api.Entities.Chamado", "Chamado")
+                        .WithMany("Historico")
+                        .HasForeignKey("ChamadoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HelpDesk.Api.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Chamado");
+
+                    b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("HelpDesk.Api.Entities.User", b =>
+            modelBuilder.Entity("HelpDesk.Api.Entities.Categoria", b =>
                 {
-                    b.Navigation("Comments");
+                    b.Navigation("Chamados");
+                });
 
-                    b.Navigation("TicketsAssigned");
+            modelBuilder.Entity("HelpDesk.Api.Entities.Chamado", b =>
+                {
+                    b.Navigation("Comentarios");
 
-                    b.Navigation("TicketsCreated");
+                    b.Navigation("Historico");
+                });
+
+            modelBuilder.Entity("HelpDesk.Api.Entities.Usuario", b =>
+                {
+                    b.Navigation("ChamadosAtribuidos");
+
+                    b.Navigation("ChamadosSolicitados");
+
+                    b.Navigation("Comentarios");
                 });
 #pragma warning restore 612, 618
         }

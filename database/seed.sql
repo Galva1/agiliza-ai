@@ -1,27 +1,37 @@
 -- =====================================================================
--- HelpDesk - Dados iniciais (seed)
+-- Agiliza HelpDesk - Dados iniciais (seed)
 -- =====================================================================
--- Cria o usuário administrador padrão para o primeiro acesso.
--- Senha em texto puro: Admin@123  (troque assim que possível)
+-- Cria o usuário administrador padrão para o primeiro acesso e as
+-- categorias de chamado padrão.
+-- Senha em texto puro do administrador: Admin@123 (troque assim que possível)
 -- O hash abaixo foi gerado com BCrypt.Net-Next (mesmo algoritmo usado
--- pela API em Services/UserService.cs e Services/AuthService.cs).
+-- pela API em Services/UsuarioService.cs e Services/AuthService.cs).
 --
--- Este mesmo usuário também é criado automaticamente pela API no
--- primeiro start (ver Data/DbSeeder.cs) caso ainda não exista nenhum
--- Admin no banco — rode este script apenas se estiver populando o
--- banco manualmente, sem passar pela aplicação.
+-- Este mesmo usuário e estas mesmas categorias também são criados
+-- automaticamente pela API no primeiro start (ver Data/DbSeeder.cs)
+-- caso ainda não existam — rode este script apenas se estiver populando
+-- o banco manualmente, sem passar pela aplicação.
 -- =====================================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-INSERT INTO users ("Id", "Name", "Email", "PasswordHash", "Role", "IsActive", "CreatedAt")
+INSERT INTO usuarios (id_usuario, nm_usuario, ds_email, ds_senha_hash, id_perfil, fl_ativo, dt_cadastro)
 VALUES (
     gen_random_uuid(),
     'Administrador',
     'admin@helpdesk.local',
     '$2a$11$rso5lddTFctqyQisQf1B0Or/RX/AoDTAkx7Rg34QwfRtnjUJy0hSa',
-    1, -- Admin
+    1, -- Administrador
     true,
     now()
 )
+ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (id_categoria, nm_categoria, ds_categoria, fl_ativo, dt_cadastro)
+VALUES
+    (gen_random_uuid(), 'Hardware', 'Problemas com equipamentos físicos: computadores, impressoras, periféricos.', true, now()),
+    (gen_random_uuid(), 'Software', 'Instalação, erros ou dúvidas sobre programas e sistemas.', true, now()),
+    (gen_random_uuid(), 'Rede', 'Conectividade, Wi-Fi, VPN e acesso à internet.', true, now()),
+    (gen_random_uuid(), 'Acesso e Permissões', 'Login, senhas e liberação de acesso a sistemas.', true, now()),
+    (gen_random_uuid(), 'Outros', 'Demais solicitações que não se enquadram nas categorias acima.', true, now())
 ON CONFLICT DO NOTHING;

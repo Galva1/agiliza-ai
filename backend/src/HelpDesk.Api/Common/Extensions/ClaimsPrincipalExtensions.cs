@@ -11,9 +11,9 @@ public static class ClaimsPrincipalExtensions
         return Guid.Parse(value!);
     }
 
-    public static UserRole GetUserRole(this ClaimsPrincipal principal)
+    public static PerfilUsuario GetUserPerfil(this ClaimsPrincipal principal)
     {
         var value = principal.FindFirstValue(ClaimTypes.Role);
-        return Enum.Parse<UserRole>(value!);
+        return Enum.Parse<PerfilUsuario>(value!);
     }
 }

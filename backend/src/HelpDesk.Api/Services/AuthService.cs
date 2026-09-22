@@ -1,7 +1,7 @@
 using HelpDesk.Api.Common.Exceptions;
 using HelpDesk.Api.Common.Mappings;
 using HelpDesk.Api.Data;
-using HelpDesk.Api.DTOs.Auth;
+using HelpDesk.Api.DTOs.Autenticacao;
 using HelpDesk.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,26 +20,26 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
-        var user = await _db.Users
+        var usuario = await _db.Usuarios
             .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
 
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
         {
             throw new AuthenticationException("E-mail ou senha inválidos.");
         }
 
-        if (!user.IsActive)
+        if (!usuario.Ativo)
         {
             throw new AuthenticationException("Usuário inativo. Contate um administrador.");
         }
 
-        var (token, expiresAt) = _tokenService.GenerateToken(user);
+        var (token, expiresAt) = _tokenService.GenerateToken(usuario);
 
         return new LoginResponse
         {
             Token = token,
-            ExpiresAt = expiresAt,
-            User = user.ToDto()
+            ExpiraEm = expiresAt,
+            Usuario = usuario.ToDto()
         };
     }
 }
