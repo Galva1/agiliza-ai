@@ -9,51 +9,13 @@ public static class DbSeeder
     public static async Task SeedAsync(AppDbContext db)
     {
         await db.Database.MigrateAsync();
-        await SeedTicketStatusesAsync(db);
-        await SeedAdminAsync(db);
-    }
-
-<<<<<<< HEAD
         await SeedAdminAsync(db);
         await SeedCategoriasAsync(db);
-=======
-    private static async Task SeedTicketStatusesAsync(AppDbContext db)
-    {
-        var existingNames = await db.StatusChamados.Select(s => s.Nome).ToListAsync();
-
-        string[] defaultStatuses =
-        [
-            StatusChamadoNomes.Aberto,
-            StatusChamadoNomes.EmAndamento,
-            StatusChamadoNomes.Aguardando,
-            StatusChamadoNomes.Resolvido,
-            StatusChamadoNomes.Fechado
-        ];
-
-        foreach (var name in defaultStatuses)
-        {
-            if (!existingNames.Contains(name))
-            {
-                db.StatusChamados.Add(new StatusChamado
-                {
-                    Nome = name,
-                    Ativo = true,
-                    DataCriacao = DateTime.UtcNow
-                });
-            }
-        }
-
-        await db.SaveChangesAsync();
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
     }
 
     private static async Task SeedAdminAsync(AppDbContext db)
     {
-<<<<<<< HEAD
         var hasAdmin = await db.Usuarios.AnyAsync(u => u.Perfil == PerfilUsuario.Administrador);
-=======
-        var hasAdmin = await db.Usuarios.AnyAsync(u => u.Perfil == Perfil.Admin);
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         if (hasAdmin)
         {
             return;
@@ -65,7 +27,6 @@ public static class DbSeeder
             Nome = "Administrador",
             Email = "admin@helpdesk.local",
             SenhaHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-<<<<<<< HEAD
             Perfil = PerfilUsuario.Administrador,
             Ativo = true,
             CriadoEm = DateTime.UtcNow
@@ -128,15 +89,6 @@ public static class DbSeeder
         };
 
         db.Categorias.AddRange(categorias);
-=======
-            Perfil = Perfil.Admin,
-            Ativo = true,
-            DataCriacao = DateTime.UtcNow,
-            CriadoPorId = null
-        };
-
-        db.Usuarios.Add(admin);
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         await db.SaveChangesAsync();
     }
 }

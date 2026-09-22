@@ -18,29 +18,17 @@ public class TokenService : ITokenService
         _settings = settings.Value;
     }
 
-<<<<<<< HEAD
     public (string Token, DateTime ExpiresAt) GenerateToken(Usuario usuario)
-=======
-    public (string Token, DateTime ExpiresAt) GenerateToken(Usuario user)
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes);
 
         var claims = new List<Claim>
         {
-<<<<<<< HEAD
             new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, usuario.Email),
             new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new(ClaimTypes.Name, usuario.Nome),
             new(ClaimTypes.Role, usuario.Perfil.ToString())
-=======
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email),
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.Nome),
-            new(ClaimTypes.Role, user.Perfil.ToString())
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));

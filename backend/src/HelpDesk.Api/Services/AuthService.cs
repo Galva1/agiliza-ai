@@ -20,26 +20,15 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
-<<<<<<< HEAD
         var usuario = await _db.Usuarios
             .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
 
         if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
-=======
-        var user = await _db.Usuarios
-            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
-
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.SenhaHash))
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         {
             throw new AuthenticationException("E-mail ou senha inválidos.");
         }
 
-<<<<<<< HEAD
         if (!usuario.Ativo)
-=======
-        if (!user.Ativo)
->>>>>>> 974e11b1c3aaa77e243ec890700622933fdbd10d
         {
             throw new AuthenticationException("Usuário inativo. Contate um administrador.");
         }
