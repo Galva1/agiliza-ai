@@ -63,6 +63,7 @@ export function ChamadoDetailPage() {
   const [resolucaoHtml, setResolucaoHtml] = useState("");
   const [isSendingResolucao, setIsSendingResolucao] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isEditingResolucao, setIsEditingResolucao] = useState(false);
 
   const canManage = user?.perfil === "Administrador" || user?.perfil === "Tecnico";
   const isOwner = user?.id === chamado?.solicitanteId;
@@ -82,6 +83,7 @@ export function ChamadoDetailPage() {
         tecnicoId: data.tecnicoId ?? "",
       });
       setResolucaoHtml(data.resolucao ?? "");
+      setIsEditingResolucao(false);
     } catch (err) {
       setError(getApiErrorMessage(err, "Não foi possível carregar o chamado."));
     } finally {
@@ -154,9 +156,9 @@ export function ChamadoDetailPage() {
     setIsSendingComment(true);
     setError(null);
     try {
-      const comentario = await addChamadoComentario(id, mensagem);
+      await addChamadoComentario(id, mensagem);
       setMensagem("");
-      setChamado((prev) => (prev ? { ...prev, comentarios: [...prev.comentarios, comentario] } : prev));
+      await load();
     } catch (err) {
       setError(getApiErrorMessage(err, "Não foi possível enviar o comentário."));
     } finally {
@@ -196,8 +198,9 @@ export function ChamadoDetailPage() {
   if (error && !chamado) return <div className="alert-error">{error}</div>;
   if (!chamado || !form) return null;
 
-  const podePropor = !chamado.resolucao || !chamado.resolucaoAprovada;
   const faltaCategoriaOuTecnico = !chamado.categoriaId || !chamado.tecnicoId;
+  const mostrarEditorResolucao = canManage && (!chamado.resolucao || isEditingResolucao);
+  const podeAlterarResolucao = canManage && !!chamado.resolucao && !chamado.resolucaoAprovada && !isEditingResolucao;
 
   const historicoOrdenado = [...chamado.historico].sort(
     (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
@@ -356,24 +359,35 @@ export function ChamadoDetailPage() {
               </div>
             )}
 
-            {chamado.resolucao && !chamado.resolucaoAprovada && (
+            {chamado.resolucao && !chamado.resolucaoAprovada && !isEditingResolucao && (
               <div className="flex flex-col gap-3">
                 <div className="alert-warning">Resolução pendente de aprovação do solicitante.</div>
                 <RichTextView html={chamado.resolucao} />
-                {canApprove && (
-                  <button
-                    type="button"
-                    className="btn-primary self-start"
-                    disabled={isApproving}
-                    onClick={handleAprovarResolucao}
-                  >
-                    {isApproving ? "Aprovando..." : "Aprovar resolução"}
-                  </button>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {canApprove && (
+                    <button
+                      type="button"
+                      className="btn-primary self-start"
+                      disabled={isApproving}
+                      onClick={handleAprovarResolucao}
+                    >
+                      {isApproving ? "Aprovando..." : "Aprovar resolução"}
+                    </button>
+                  )}
+                  {podeAlterarResolucao && (
+                    <button
+                      type="button"
+                      className="btn-secondary self-start"
+                      onClick={() => setIsEditingResolucao(true)}
+                    >
+                      Alterar resolução
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
-            {canManage && podePropor && (
+            {mostrarEditorResolucao && (
               <div className="flex flex-col gap-3">
                 {faltaCategoriaOuTecnico && (
                   <div className="alert-warning">
@@ -386,14 +400,28 @@ export function ChamadoDetailPage() {
                   placeholder="Descreva a resolução aplicada..."
                   readOnly={faltaCategoriaOuTecnico}
                 />
-                <button
-                  type="button"
-                  className="btn-primary self-start"
-                  disabled={faltaCategoriaOuTecnico || isSendingResolucao}
-                  onClick={handleProporResolucao}
-                >
-                  {isSendingResolucao ? "Enviando..." : "Enviar resolução"}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="btn-primary self-start"
+                    disabled={faltaCategoriaOuTecnico || isSendingResolucao}
+                    onClick={handleProporResolucao}
+                  >
+                    {isSendingResolucao ? "Enviando..." : "Enviar resolução"}
+                  </button>
+                  {isEditingResolucao && (
+                    <button
+                      type="button"
+                      className="btn-ghost self-start"
+                      onClick={() => {
+                        setResolucaoHtml(chamado.resolucao ?? "");
+                        setIsEditingResolucao(false);
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 

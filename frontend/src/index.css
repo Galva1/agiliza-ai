@@ -128,11 +128,11 @@ body {
   }
 
   .rich-text-content {
-    @apply prose prose-sm max-w-none text-surface-800 prose-headings:text-surface-900 prose-p:my-2 prose-img:my-2 prose-img:rounded-lg dark:prose-invert dark:text-surface-200;
+    @apply prose prose-sm prose-slate max-w-none prose-p:my-2 prose-img:my-2 prose-img:rounded-lg dark:prose-invert;
   }
 
   .ProseMirror {
-    @apply min-h-[140px] rounded-b-lg border border-t-0 border-surface-300 bg-white px-3 py-2 text-sm text-surface-900 focus:outline-none dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100;
+    @apply prose prose-sm prose-slate max-w-none min-h-[140px] rounded-b-lg border border-t-0 border-surface-300 bg-white px-3 py-2 prose-p:my-2 prose-img:my-2 prose-img:rounded-lg focus:outline-none dark:prose-invert dark:border-surface-700 dark:bg-surface-800;
   }
 
   .ProseMirror p.is-editor-empty:first-child::before {
