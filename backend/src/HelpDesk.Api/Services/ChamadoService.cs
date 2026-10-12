@@ -201,15 +201,38 @@ public class ChamadoService : IChamadoService
             throw new BusinessRuleException("Não é possível propor uma resolução sem categoria e técnico atribuídos ao chamado.");
         }
 
-        var resolucao = request.Resolucao.Trim();
+        if (chamado.Status == StatusChamado.Fechado)
+        {
+            throw new BusinessRuleException("Não é possível propor uma resolução para um chamado fechado.");
+        }
 
-        chamado.Resolucao = resolucao;
-        chamado.ResolucaoPropostaEm = DateTime.UtcNow;
+        var possuiPendente = await _db.Resolucoes.AnyAsync(r =>
+            r.ChamadoId == chamado.Id && r.Situacao == SituacaoResolucao.Pendente);
+        if (possuiPendente)
+        {
+            throw new BusinessRuleException("Já existe uma resolução aguardando avaliação do solicitante.");
+        }
+
+        var descricao = request.Resolucao.Trim();
+        var agora = DateTime.UtcNow;
+
+        _db.Resolucoes.Add(new ResolucaoChamado
+        {
+            Id = Guid.NewGuid(),
+            ChamadoId = chamado.Id,
+            UsuarioId = userId,
+            Descricao = descricao,
+            Situacao = SituacaoResolucao.Pendente,
+            CriadoEm = agora
+        });
+
+        chamado.Resolucao = descricao;
+        chamado.ResolucaoPropostaEm = agora;
         chamado.ResolucaoAprovada = false;
         chamado.Status = StatusChamado.Resolvido;
-        chamado.AtualizadoEm = DateTime.UtcNow;
+        chamado.AtualizadoEm = agora;
 
-        _db.Historico.Add(NovoHistorico(chamado.Id, userId, "resolucao_proposta", null, TruncarTexto(resolucao, 120)));
+        _db.Historico.Add(NovoHistorico(chamado.Id, userId, "resolucao_proposta", null, TruncarTexto(descricao, 120)));
 
         await _db.SaveChangesAsync();
 
@@ -219,24 +242,50 @@ public class ChamadoService : IChamadoService
     public async Task<ChamadoDto> AprovarResolucaoAsync(Guid chamadoId, Guid userId, PerfilUsuario perfil)
     {
         var chamado = await FindChamadoOrThrowAsync(chamadoId, includeComentarios: false, includeHistorico: false);
+        EnsureCanAvaliarResolucao(chamado, userId, perfil);
+        var resolucao = await FindResolucaoPendenteOrThrowAsync(chamado.Id);
 
-        if (perfil != PerfilUsuario.Administrador && chamado.SolicitanteId != userId)
-        {
-            throw new ForbiddenException("Apenas o solicitante do chamado ou um administrador podem aprovar a resolução.");
-        }
+        var agora = DateTime.UtcNow;
 
-        if (chamado.Resolucao is null || chamado.ResolucaoAprovada)
-        {
-            throw new BusinessRuleException("Este chamado não possui uma resolução pendente de aprovação.");
-        }
+        resolucao.Situacao = SituacaoResolucao.Aprovada;
+        resolucao.AvaliadoPorId = userId;
+        resolucao.AvaliadoEm = agora;
 
+        chamado.Resolucao = resolucao.Descricao;
         chamado.ResolucaoAprovada = true;
-        chamado.ConcluidoEm = DateTime.UtcNow;
+        chamado.ConcluidoEm = agora;
         chamado.Status = StatusChamado.Fechado;
-        chamado.FechadoEm = DateTime.UtcNow;
-        chamado.AtualizadoEm = DateTime.UtcNow;
+        chamado.FechadoEm = agora;
+        chamado.AtualizadoEm = agora;
 
         _db.Historico.Add(NovoHistorico(chamado.Id, userId, "resolucao_aprovada", null, null));
+
+        await _db.SaveChangesAsync();
+
+        return chamado.ToDto();
+    }
+
+    public async Task<ChamadoDto> RecusarResolucaoAsync(Guid chamadoId, RecusarResolucaoRequest request, Guid userId, PerfilUsuario perfil)
+    {
+        var chamado = await FindChamadoOrThrowAsync(chamadoId, includeComentarios: false, includeHistorico: false);
+        EnsureCanAvaliarResolucao(chamado, userId, perfil);
+        var resolucao = await FindResolucaoPendenteOrThrowAsync(chamado.Id);
+
+        var agora = DateTime.UtcNow;
+        var motivo = string.IsNullOrWhiteSpace(request.Motivo) ? null : request.Motivo.Trim();
+
+        resolucao.Situacao = SituacaoResolucao.Recusada;
+        resolucao.MotivoRecusa = motivo;
+        resolucao.AvaliadoPorId = userId;
+        resolucao.AvaliadoEm = agora;
+
+        chamado.Resolucao = null;
+        chamado.ResolucaoPropostaEm = null;
+        chamado.ResolucaoAprovada = false;
+        chamado.Status = StatusChamado.EmAndamento;
+        chamado.AtualizadoEm = agora;
+
+        _db.Historico.Add(NovoHistorico(chamado.Id, userId, "resolucao_recusada", null, motivo is null ? null : TruncarTexto(motivo, 120)));
 
         await _db.SaveChangesAsync();
 
@@ -295,6 +344,8 @@ public class ChamadoService : IChamadoService
         if (includeHistorico)
         {
             query = query.Include(c => c.Historico).ThenInclude(h => h.Usuario);
+            query = query.Include(c => c.Resolucoes).ThenInclude(r => r.Usuario);
+            query = query.Include(c => c.Resolucoes).ThenInclude(r => r.AvaliadoPor);
         }
 
         var chamado = await query.FirstOrDefaultAsync(c => c.Id == chamadoId);
@@ -312,6 +363,28 @@ public class ChamadoService : IChamadoService
         {
             throw new ForbiddenException("Você não tem permissão para acessar este chamado.");
         }
+    }
+
+    private static void EnsureCanAvaliarResolucao(Chamado chamado, Guid userId, PerfilUsuario perfil)
+    {
+        if (perfil != PerfilUsuario.Administrador && chamado.SolicitanteId != userId)
+        {
+            throw new ForbiddenException("Apenas o solicitante do chamado ou um administrador podem avaliar a resolução.");
+        }
+    }
+
+    private async Task<ResolucaoChamado> FindResolucaoPendenteOrThrowAsync(Guid chamadoId)
+    {
+        var resolucao = await _db.Resolucoes
+            .OrderByDescending(r => r.CriadoEm)
+            .FirstOrDefaultAsync(r => r.ChamadoId == chamadoId && r.Situacao == SituacaoResolucao.Pendente);
+
+        if (resolucao is null)
+        {
+            throw new BusinessRuleException("Este chamado não possui uma resolução pendente de aprovação.");
+        }
+
+        return resolucao;
     }
 
     private static HistoricoChamado NovoHistorico(Guid chamadoId, Guid userId, string acao, string? valorAnterior, string? valorNovo)

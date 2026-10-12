@@ -7,6 +7,7 @@ import { ChamadoDetailPage } from "./pages/ChamadoDetailPage";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { LayoutsPage } from "./pages/LayoutsPage";
 
 function App() {
   return (
@@ -28,6 +29,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["Administrador"]}>
               <CategoriasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/layouts"
+          element={
+            <ProtectedRoute allowedRoles={["Administrador"]}>
+              <LayoutsPage />
             </ProtectedRoute>
           }
         />

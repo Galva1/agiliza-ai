@@ -89,3 +89,30 @@ CREATE TABLE IF NOT EXISTS historico_chamado (
 
 CREATE INDEX IF NOT EXISTS "IX_historico_chamado_id_chamado" ON historico_chamado (id_chamado);
 CREATE INDEX IF NOT EXISTS "IX_historico_chamado_id_usuario" ON historico_chamado (id_usuario);
+
+CREATE TABLE IF NOT EXISTS resolucoes_chamado (
+    id_resolucao            uuid PRIMARY KEY,
+    id_chamado              uuid NOT NULL REFERENCES chamados (id_chamado) ON DELETE CASCADE,
+    id_usuario              uuid NOT NULL REFERENCES usuarios (id_usuario) ON DELETE RESTRICT,
+    ds_resolucao            text NOT NULL,
+    id_situacao             integer NOT NULL, -- 1 Pendente, 2 Aprovada, 3 Recusada
+    ds_motivo_recusa        text NULL,
+    dt_cadastro             timestamptz NOT NULL DEFAULT now(),
+    id_usuario_avaliador    uuid NULL REFERENCES usuarios (id_usuario) ON DELETE RESTRICT,
+    dt_avaliacao            timestamptz NULL
+);
+
+CREATE INDEX IF NOT EXISTS "IX_resolucoes_chamado_id_chamado" ON resolucoes_chamado (id_chamado);
+CREATE INDEX IF NOT EXISTS "IX_resolucoes_chamado_id_usuario" ON resolucoes_chamado (id_usuario);
+CREATE INDEX IF NOT EXISTS "IX_resolucoes_chamado_id_usuario_avaliador" ON resolucoes_chamado (id_usuario_avaliador);
+
+CREATE TABLE IF NOT EXISTS modelos_texto (
+    id_modelo_texto     uuid PRIMARY KEY,
+    nm_titulo           varchar(120) NOT NULL,
+    ds_conteudo         text NOT NULL,
+    fl_ativo            boolean NOT NULL DEFAULT true,
+    dt_cadastro         timestamptz NOT NULL DEFAULT now(),
+    dt_atualizacao      timestamptz NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_modelos_texto_nm_titulo" ON modelos_texto (nm_titulo);

@@ -90,4 +90,12 @@ public class ChamadosController : ControllerBase
         var perfil = User.GetUserPerfil();
         return Ok(await _chamadoService.AprovarResolucaoAsync(id, userId, perfil));
     }
+
+    [HttpPost("{id:guid}/resolucao/recusar")]
+    public async Task<ActionResult<ChamadoDto>> RecusarResolucao(Guid id, [FromBody] RecusarResolucaoRequest request)
+    {
+        var userId = User.GetUserId();
+        var perfil = User.GetUserPerfil();
+        return Ok(await _chamadoService.RecusarResolucaoAsync(id, request, userId, perfil));
+    }
 }

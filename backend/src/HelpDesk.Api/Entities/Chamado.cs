@@ -30,4 +30,5 @@ public class Chamado
 
     public ICollection<ComentarioChamado> Comentarios { get; set; } = new List<ComentarioChamado>();
     public ICollection<HistoricoChamado> Historico { get; set; } = new List<HistoricoChamado>();
+    public ICollection<ResolucaoChamado> Resolucoes { get; set; } = new List<ResolucaoChamado>();
 }

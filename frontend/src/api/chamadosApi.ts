@@ -69,3 +69,8 @@ export async function aprovarResolucao(id: string): Promise<Chamado> {
   const { data } = await apiClient.post<Chamado>(`/chamados/${id}/resolucao/aprovar`);
   return data;
 }
+
+export async function recusarResolucao(id: string, motivo?: string): Promise<Chamado> {
+  const { data } = await apiClient.post<Chamado>(`/chamados/${id}/resolucao/recusar`, { motivo });
+  return data;
+}
