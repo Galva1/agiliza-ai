@@ -75,6 +75,30 @@ public class ChamadosController : ControllerBase
         return Ok(comentario);
     }
 
+    [HttpPost("{id:guid}/comentarios/{comentarioId:guid}/concluir")]
+    public async Task<ActionResult<ComentarioChamadoDto>> ConcluirPendencia(Guid id, Guid comentarioId, [FromBody] ResponderComentarioRequest request)
+    {
+        var userId = User.GetUserId();
+        var perfil = User.GetUserPerfil();
+        return Ok(await _chamadoService.ConcluirPendenciaAsync(id, comentarioId, request, userId, perfil));
+    }
+
+    [HttpPost("{id:guid}/comentarios/{comentarioId:guid}/aprovar")]
+    public async Task<ActionResult<ComentarioChamadoDto>> AprovarSolicitacao(Guid id, Guid comentarioId, [FromBody] ResponderComentarioRequest request)
+    {
+        var userId = User.GetUserId();
+        var perfil = User.GetUserPerfil();
+        return Ok(await _chamadoService.ResponderSolicitacaoAsync(id, comentarioId, true, request, userId, perfil));
+    }
+
+    [HttpPost("{id:guid}/comentarios/{comentarioId:guid}/recusar")]
+    public async Task<ActionResult<ComentarioChamadoDto>> RecusarSolicitacao(Guid id, Guid comentarioId, [FromBody] ResponderComentarioRequest request)
+    {
+        var userId = User.GetUserId();
+        var perfil = User.GetUserPerfil();
+        return Ok(await _chamadoService.ResponderSolicitacaoAsync(id, comentarioId, false, request, userId, perfil));
+    }
+
     [HttpPost("{id:guid}/resolucao")]
     public async Task<ActionResult<ChamadoDto>> ProporResolucao(Guid id, [FromBody] ProporResolucaoRequest request)
     {

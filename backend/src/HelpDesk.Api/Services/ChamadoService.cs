@@ -167,12 +167,42 @@ public class ChamadoService : IChamadoService
             ChamadoId = chamadoId,
             UsuarioId = userId,
             Mensagem = mensagem,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            Tipo = request.Tipo
         };
+
+        string acaoHistorico;
+        string? valorAnterior = null;
+
+        switch (request.Tipo)
+        {
+            case TipoComentario.Pendencia:
+                EnsureTecnicoOuAdministrador(perfil, "Apenas técnicos ou administradores podem registrar pendências.");
+                if (request.Responsavel is null)
+                {
+                    throw new BusinessRuleException("Informe quem deve resolver a pendência.");
+                }
+                comentario.Responsavel = request.Responsavel;
+                comentario.Situacao = SituacaoComentario.Aberta;
+                acaoHistorico = "pendencia";
+                valorAnterior = request.Responsavel == ResponsavelPendencia.Tecnico ? "Técnico" : "Solicitante";
+                break;
+
+            case TipoComentario.SolicitacaoAprovacao:
+                EnsureTecnicoOuAdministrador(perfil, "Apenas técnicos ou administradores podem solicitar aprovação.");
+                comentario.Situacao = SituacaoComentario.Aberta;
+                acaoHistorico = "solicitacao_aprovacao";
+                break;
+
+            default:
+                comentario.Tipo = TipoComentario.Comentario;
+                acaoHistorico = "comentario";
+                break;
+        }
 
         _db.Comentarios.Add(comentario);
 
-        _db.Historico.Add(NovoHistorico(chamado.Id, userId, "comentario", null, TruncarTexto(mensagem, 120)));
+        _db.Historico.Add(NovoHistorico(chamado.Id, userId, acaoHistorico, valorAnterior, TruncarTexto(mensagem, 120)));
 
         chamado.AtualizadoEm = DateTime.UtcNow;
 
@@ -180,6 +210,51 @@ public class ChamadoService : IChamadoService
         await _db.Entry(comentario).Reference(c => c.Usuario).LoadAsync();
 
         return comentario.ToDto();
+    }
+
+    public async Task<ComentarioChamadoDto> ConcluirPendenciaAsync(Guid chamadoId, Guid comentarioId, ResponderComentarioRequest request, Guid userId, PerfilUsuario perfil)
+    {
+        var chamado = await FindChamadoOrThrowAsync(chamadoId, includeComentarios: false, includeHistorico: false);
+        EnsureCanView(chamado, userId, perfil);
+        var comentario = await FindComentarioAbertoOrThrowAsync(chamadoId, comentarioId, TipoComentario.Pendencia);
+
+        var podeConcluir = perfil == PerfilUsuario.Administrador || comentario.Responsavel switch
+        {
+            ResponsavelPendencia.Tecnico => perfil == PerfilUsuario.Tecnico,
+            ResponsavelPendencia.Solicitante => chamado.SolicitanteId == userId,
+            _ => false
+        };
+
+        if (!podeConcluir)
+        {
+            throw new ForbiddenException("Esta pendência deve ser resolvida por outro responsável.");
+        }
+
+        ResponderComentario(comentario, SituacaoComentario.Concluida, request, userId);
+        chamado.AtualizadoEm = DateTime.UtcNow;
+        _db.Historico.Add(NovoHistorico(chamado.Id, userId, "pendencia_concluida", null, TruncarTexto(comentario.Mensagem, 120)));
+
+        await _db.SaveChangesAsync();
+        return await CarregarComentarioDtoAsync(comentario);
+    }
+
+    public async Task<ComentarioChamadoDto> ResponderSolicitacaoAsync(Guid chamadoId, Guid comentarioId, bool aprovada, ResponderComentarioRequest request, Guid userId, PerfilUsuario perfil)
+    {
+        var chamado = await FindChamadoOrThrowAsync(chamadoId, includeComentarios: false, includeHistorico: false);
+        EnsureCanAvaliarResolucao(chamado, userId, perfil);
+        var comentario = await FindComentarioAbertoOrThrowAsync(chamadoId, comentarioId, TipoComentario.SolicitacaoAprovacao);
+
+        ResponderComentario(comentario, aprovada ? SituacaoComentario.Aprovada : SituacaoComentario.Recusada, request, userId);
+        chamado.AtualizadoEm = DateTime.UtcNow;
+        _db.Historico.Add(NovoHistorico(
+            chamado.Id,
+            userId,
+            aprovada ? "solicitacao_aprovada" : "solicitacao_recusada",
+            null,
+            comentario.Resposta is null ? null : TruncarTexto(comentario.Resposta, 120)));
+
+        await _db.SaveChangesAsync();
+        return await CarregarComentarioDtoAsync(comentario);
     }
 
     public async Task<ChamadoDto> ProporResolucaoAsync(Guid chamadoId, ProporResolucaoRequest request, Guid userId, PerfilUsuario perfil)
@@ -339,6 +414,7 @@ public class ChamadoService : IChamadoService
         if (includeComentarios)
         {
             query = query.Include(c => c.Comentarios).ThenInclude(cc => cc.Usuario);
+            query = query.Include(c => c.Comentarios).ThenInclude(cc => cc.RespondidoPor);
         }
 
         if (includeHistorico)
@@ -371,6 +447,45 @@ public class ChamadoService : IChamadoService
         {
             throw new ForbiddenException("Apenas o solicitante do chamado ou um administrador podem avaliar a resolução.");
         }
+    }
+
+    private static void EnsureTecnicoOuAdministrador(PerfilUsuario perfil, string mensagem)
+    {
+        if (perfil != PerfilUsuario.Tecnico && perfil != PerfilUsuario.Administrador)
+        {
+            throw new ForbiddenException(mensagem);
+        }
+    }
+
+    private async Task<ComentarioChamado> FindComentarioAbertoOrThrowAsync(Guid chamadoId, Guid comentarioId, TipoComentario tipo)
+    {
+        var comentario = await _db.Comentarios.FirstOrDefaultAsync(c => c.Id == comentarioId && c.ChamadoId == chamadoId);
+        if (comentario is null || comentario.Tipo != tipo)
+        {
+            throw new NotFoundException(tipo == TipoComentario.Pendencia ? "Pendência não encontrada." : "Solicitação de aprovação não encontrada.");
+        }
+
+        if (comentario.Situacao != SituacaoComentario.Aberta)
+        {
+            throw new BusinessRuleException("Este registro já foi respondido.");
+        }
+
+        return comentario;
+    }
+
+    private static void ResponderComentario(ComentarioChamado comentario, SituacaoComentario situacao, ResponderComentarioRequest request, Guid userId)
+    {
+        comentario.Situacao = situacao;
+        comentario.Resposta = string.IsNullOrWhiteSpace(request.Observacao) ? null : request.Observacao.Trim();
+        comentario.RespondidoPorId = userId;
+        comentario.RespondidoEm = DateTime.UtcNow;
+    }
+
+    private async Task<ComentarioChamadoDto> CarregarComentarioDtoAsync(ComentarioChamado comentario)
+    {
+        await _db.Entry(comentario).Reference(c => c.Usuario).LoadAsync();
+        await _db.Entry(comentario).Reference(c => c.RespondidoPor).LoadAsync();
+        return comentario.ToDto();
     }
 
     private async Task<ResolucaoChamado> FindResolucaoPendenteOrThrowAsync(Guid chamadoId)

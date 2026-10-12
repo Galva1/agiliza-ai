@@ -67,7 +67,13 @@ public static class ChamadoMappings
         UsuarioId = comentario.UsuarioId,
         UsuarioNome = comentario.Usuario?.Nome ?? string.Empty,
         Mensagem = comentario.Mensagem,
-        CriadoEm = comentario.CriadoEm
+        CriadoEm = comentario.CriadoEm,
+        Tipo = comentario.Tipo,
+        Responsavel = comentario.Responsavel,
+        Situacao = comentario.Situacao,
+        Resposta = comentario.Resposta,
+        RespondidoPorNome = comentario.RespondidoPor?.Nome,
+        RespondidoEm = comentario.RespondidoEm
     };
 
     public static ResolucaoChamadoDto ToDto(this ResolucaoChamado resolucao) => new()

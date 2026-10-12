@@ -1,14 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFloppyDisk, faPlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCircleCheck,
+  faCircleQuestion,
+  faFloppyDisk,
+  faPlus,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   addChamadoComentario,
   aprovarResolucao,
+  concluirPendencia,
   getChamadoById,
   proporResolucao,
   recusarResolucao,
+  responderSolicitacao,
   updateChamado,
 } from "../api/chamadosApi";
 import { getTecnicos } from "../api/usuariosApi";
@@ -27,13 +35,15 @@ import type {
   ModeloTexto,
   PrioridadeChamado,
   ResolucaoChamado,
+  ResponsavelPendencia,
+  SituacaoComentario,
   SituacaoResolucao,
   StatusChamado,
   Usuario,
 } from "../types";
 
 type Tab = "detalhes" | "historico";
-type TipoRegistro = "comentario" | "resolucao";
+type TipoRegistro = "comentario" | "pendencia" | "solicitacao" | "resolucao";
 
 type ItemTimeline =
   | { tipo: "comentario"; criadoEm: string; comentario: ComentarioChamado }
@@ -48,6 +58,37 @@ const ACAO_LABELS: Record<AcaoHistorico, string> = {
   resolucao_proposta: "Resolução proposta",
   resolucao_aprovada: "Resolução aprovada",
   resolucao_recusada: "Resolução recusada",
+  pendencia: "Pendência registrada",
+  pendencia_concluida: "Pendência resolvida",
+  solicitacao_aprovacao: "Aprovação solicitada",
+  solicitacao_aprovada: "Solicitação aprovada",
+  solicitacao_recusada: "Solicitação recusada",
+};
+
+const TIPO_REGISTRO_LABELS: Record<TipoRegistro, string> = {
+  comentario: "Registrar comentário",
+  pendencia: "Registrar pendência",
+  solicitacao: "Solicitar aprovação",
+  resolucao: "Registrar resolução",
+};
+
+const TIPO_REGISTRO_PLACEHOLDERS: Record<TipoRegistro, string> = {
+  comentario: "Escreva o acompanhamento do chamado...",
+  pendencia: "Descreva o que precisa ser feito (ex.: falar com fulano sobre o problema e anexar o print aqui)...",
+  solicitacao: "Descreva o caminho proposto para o solicitante aprovar (ex.: podemos fazer dessa forma?)...",
+  resolucao: "Descreva a resolução aplicada...",
+};
+
+const RESPONSAVEL_LABELS: Record<ResponsavelPendencia, string> = {
+  Tecnico: "Técnico",
+  Solicitante: "Solicitante",
+};
+
+const SITUACAO_COMENTARIO_LABELS: Record<SituacaoComentario, string> = {
+  Aberta: "Aberta",
+  Concluida: "Resolvida",
+  Aprovada: "Aprovada",
+  Recusada: "Recusada",
 };
 
 const SITUACAO_RESOLUCAO_LABELS: Record<SituacaoResolucao, string> = {
@@ -102,7 +143,13 @@ export function ChamadoDetailPage() {
   const [tipoRegistro, setTipoRegistro] = useState<TipoRegistro>("comentario");
   const [texto, setTexto] = useState("");
   const [modeloSelecionado, setModeloSelecionado] = useState("");
+  const [responsavel, setResponsavel] = useState<ResponsavelPendencia>("Solicitante");
   const [isSending, setIsSending] = useState(false);
+  const composerRef = useRef<HTMLFormElement>(null);
+
+  const [respondendo, setRespondendo] = useState<{ id: string; aprovada: boolean } | null>(null);
+  const [observacaoResposta, setObservacaoResposta] = useState("");
+  const [isResponding, setIsResponding] = useState(false);
 
   const [isApproving, setIsApproving] = useState(false);
   const [recusandoId, setRecusandoId] = useState<string | null>(null);
@@ -143,6 +190,12 @@ export function ChamadoDetailPage() {
       getCategorias().then(setCategorias).catch(() => setCategorias([]));
     }
   }, [canManage]);
+
+  useEffect(() => {
+    if (isComposerOpen) {
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isComposerOpen]);
 
   useEffect(() => {
     getModelosTexto()
@@ -224,6 +277,7 @@ export function ChamadoDetailPage() {
     setTipoRegistro("comentario");
     setTexto("");
     setModeloSelecionado("");
+    setResponsavel("Solicitante");
   };
 
   const handleAplicarModelo = (modeloId: string) => {
@@ -242,6 +296,10 @@ export function ChamadoDetailPage() {
     try {
       if (tipoRegistro === "resolucao") {
         await proporResolucao(id, texto);
+      } else if (tipoRegistro === "pendencia") {
+        await addChamadoComentario(id, texto, "Pendencia", responsavel);
+      } else if (tipoRegistro === "solicitacao") {
+        await addChamadoComentario(id, texto, "SolicitacaoAprovacao");
       } else {
         await addChamadoComentario(id, texto);
       }
@@ -251,7 +309,7 @@ export function ChamadoDetailPage() {
       setError(
         getApiErrorMessage(
           err,
-          tipoRegistro === "resolucao" ? "Não foi possível enviar a resolução." : "Não foi possível enviar o comentário."
+          tipoRegistro === "resolucao" ? "Não foi possível enviar a resolução." : "Não foi possível enviar o registro."
         )
       );
     } finally {
@@ -270,6 +328,36 @@ export function ChamadoDetailPage() {
       setError(getApiErrorMessage(err, "Não foi possível aprovar a resolução."));
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  const handleConcluirPendencia = async (comentario: ComentarioChamado) => {
+    if (!id) return;
+    setError(null);
+    setIsResponding(true);
+    try {
+      await concluirPendencia(id, comentario.id);
+      await load();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Não foi possível resolver a pendência."));
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
+  const handleResponderSolicitacao = async (comentario: ComentarioChamado, aprovada: boolean) => {
+    if (!id) return;
+    setError(null);
+    setIsResponding(true);
+    try {
+      await responderSolicitacao(id, comentario.id, aprovada, observacaoResposta.trim() || undefined);
+      setRespondendo(null);
+      setObservacaoResposta("");
+      await load();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Não foi possível responder a solicitação."));
+    } finally {
+      setIsResponding(false);
     }
   };
 
@@ -299,21 +387,165 @@ export function ChamadoDetailPage() {
   const chamadoFechado = chamado.status === "Fechado";
   const podeProporResolucao = canManage && isTecnicoResponsavel && !possuiResolucaoPendente && !chamadoFechado;
 
-  const renderComentario = (comentario: ComentarioChamado) => (
-    <li key={`c-${comentario.id}`} className="relative pl-8">
-      <span className="absolute left-0 top-5 h-3 w-3 rounded-full bg-brand-500 ring-4 ring-surface-100 dark:ring-surface-950" />
-      <div className="card p-4">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-          <div className="flex items-center gap-2">
-            <strong className="text-surface-900 dark:text-surface-100">{comentario.usuarioNome}</strong>
-            <span className="text-surface-500 dark:text-surface-400">comentou</span>
-          </div>
-          <span className="text-surface-500 dark:text-surface-400">{formatarData(comentario.criadoEm)}</span>
-        </div>
-        <RichTextView html={comentario.mensagem} />
+  const podeConcluirPendencia = (comentario: ComentarioChamado) =>
+    user?.perfil === "Administrador" ||
+    (comentario.responsavel === "Tecnico" && user?.perfil === "Tecnico") ||
+    (comentario.responsavel === "Solicitante" && isOwner);
+
+  const renderRespostaRegistro = (comentario: ComentarioChamado) => {
+    if (!comentario.situacao || comentario.situacao === "Aberta" || !comentario.respondidoEm) return null;
+    const positivo = comentario.situacao !== "Recusada";
+    return (
+      <div className={positivo ? "alert-success" : "alert-error"}>
+        {SITUACAO_COMENTARIO_LABELS[comentario.situacao]}
+        {comentario.respondidoPorNome && ` por ${comentario.respondidoPorNome}`} em {formatarData(comentario.respondidoEm)}.
+        {comentario.resposta && (
+          <span className="mt-1 block">
+            <strong>{positivo ? "Observação:" : "Motivo:"}</strong> {comentario.resposta}
+          </span>
+        )}
       </div>
-    </li>
-  );
+    );
+  };
+
+  const renderComentario = (comentario: ComentarioChamado) => {
+    const isPendencia = comentario.tipo === "Pendencia";
+    const isSolicitacao = comentario.tipo === "SolicitacaoAprovacao";
+    const aberta = comentario.situacao === "Aberta";
+
+    const dotClass = isPendencia
+      ? aberta
+        ? "bg-amber-400"
+        : "bg-emerald-500"
+      : isSolicitacao
+        ? "bg-sky-500"
+        : "bg-brand-500";
+
+    const cardClass = isPendencia
+      ? "border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/30"
+      : isSolicitacao
+        ? "border-sky-300 bg-sky-50 dark:border-sky-700/60 dark:bg-sky-950/30"
+        : "";
+
+    const acao = isPendencia ? "registrou uma pendência" : isSolicitacao ? "solicitou aprovação" : "comentou";
+
+    return (
+      <li key={`c-${comentario.id}`} className="relative pl-8">
+        <span
+          className={`absolute left-0 top-5 h-3 w-3 rounded-full ring-4 ring-surface-100 dark:ring-surface-950 ${dotClass}`}
+        />
+        <div className={`card flex flex-col gap-3 p-4 ${cardClass}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {isPendencia && <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-500" />}
+              {isSolicitacao && <FontAwesomeIcon icon={faCircleQuestion} className="text-sky-500" />}
+              <strong className="text-surface-900 dark:text-surface-100">{comentario.usuarioNome}</strong>
+              <span className="text-surface-500 dark:text-surface-400">{acao}</span>
+              {isPendencia && comentario.responsavel && (
+                <span className="inline-flex items-center rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                  Responsável: {RESPONSAVEL_LABELS[comentario.responsavel]}
+                </span>
+              )}
+              {comentario.situacao && (comentario.situacao !== "Aberta" || isSolicitacao) && (
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    comentario.situacao === "Recusada"
+                      ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                      : comentario.situacao === "Aberta"
+                        ? "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300"
+                        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                  }`}
+                >
+                  {comentario.situacao === "Aberta" ? "Aguardando resposta" : SITUACAO_COMENTARIO_LABELS[comentario.situacao]}
+                </span>
+              )}
+            </div>
+            <span className="text-surface-500 dark:text-surface-400">{formatarData(comentario.criadoEm)}</span>
+          </div>
+
+          <RichTextView html={comentario.mensagem} />
+
+          {renderRespostaRegistro(comentario)}
+
+          {isPendencia && aberta && podeConcluirPendencia(comentario) && (
+            <button
+              type="button"
+              className="btn-primary self-start"
+              disabled={isResponding}
+              onClick={() => handleConcluirPendencia(comentario)}
+            >
+              <FontAwesomeIcon icon={faCircleCheck} />
+              Marcar como resolvida
+            </button>
+          )}
+
+          {isPendencia && aberta && !podeConcluirPendencia(comentario) && comentario.responsavel && (
+            <p className="text-xs text-surface-500 dark:text-surface-400">
+              Aguardando o {RESPONSAVEL_LABELS[comentario.responsavel].toLowerCase()} resolver.
+            </p>
+          )}
+
+          {isSolicitacao && aberta && canApprove && respondendo?.id !== comentario.id && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setRespondendo({ id: comentario.id, aprovada: true });
+                  setObservacaoResposta("");
+                }}
+              >
+                Aprovar
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setRespondendo({ id: comentario.id, aprovada: false });
+                  setObservacaoResposta("");
+                }}
+              >
+                Recusar
+              </button>
+            </div>
+          )}
+
+          {isSolicitacao && aberta && respondendo?.id === comentario.id && (
+            <div className="flex flex-col gap-2">
+              <label className="flex flex-col gap-1.5">
+                <span className="field-label">
+                  {respondendo.aprovada ? "Observação (opcional)" : "Motivo da recusa (opcional)"}
+                </span>
+                <textarea
+                  className="field-input"
+                  rows={3}
+                  value={observacaoResposta}
+                  onChange={(e) => setObservacaoResposta(e.target.value)}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={respondendo.aprovada ? "btn-primary" : "btn-danger"}
+                  disabled={isResponding}
+                  onClick={() => handleResponderSolicitacao(comentario, respondendo.aprovada)}
+                >
+                  {isResponding ? "Enviando..." : respondendo.aprovada ? "Confirmar aprovação" : "Confirmar recusa"}
+                </button>
+                <button type="button" className="btn-ghost" onClick={() => setRespondendo(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isSolicitacao && aberta && !canApprove && (
+            <p className="text-xs text-surface-500 dark:text-surface-400">Aguardando resposta do solicitante.</p>
+          )}
+        </div>
+      </li>
+    );
+  };
 
   const renderResolucao = (resolucao: ResolucaoChamado) => (
     <li key={`r-${resolucao.id}`} className="relative pl-8">
@@ -480,7 +712,7 @@ export function ChamadoDetailPage() {
               )}
 
               {isComposerOpen && (
-                <form className="card flex flex-col gap-4" onSubmit={handleEnviarRegistro}>
+                <form ref={composerRef} className="card flex scroll-mt-6 flex-col gap-4" onSubmit={handleEnviarRegistro}>
                   <div className="flex flex-wrap items-end gap-4">
                     {canManage && (
                       <label className="flex flex-col gap-1.5">
@@ -491,6 +723,8 @@ export function ChamadoDetailPage() {
                           onChange={(e) => setTipoRegistro(e.target.value as TipoRegistro)}
                         >
                           <option value="comentario">Comentário</option>
+                          <option value="pendencia">Pendência</option>
+                          <option value="solicitacao">Solicitação de aprovação</option>
                           <option value="resolucao" disabled={!podeProporResolucao}>
                             Resolução
                           </option>
@@ -518,7 +752,33 @@ export function ChamadoDetailPage() {
                     </label>
                   </div>
 
-                  {canManage && possuiResolucaoPendente && (
+                  {tipoRegistro === "pendencia" && (
+                    <fieldset className="flex flex-col gap-1.5">
+                      <legend className="field-label mb-1.5">Quem resolve a pendência?</legend>
+                      <div className="flex flex-wrap gap-4 text-sm text-surface-700 dark:text-surface-200">
+                        {(["Solicitante", "Tecnico"] as ResponsavelPendencia[]).map((opcao) => (
+                          <label key={opcao} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="responsavel"
+                              value={opcao}
+                              checked={responsavel === opcao}
+                              onChange={() => setResponsavel(opcao)}
+                            />
+                            {RESPONSAVEL_LABELS[opcao]}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+
+                  {tipoRegistro === "solicitacao" && (
+                    <p className="text-xs text-surface-500 dark:text-surface-400">
+                      O solicitante poderá aprovar ou recusar o caminho proposto antes de você seguir.
+                    </p>
+                  )}
+
+                  {canManage && possuiResolucaoPendente && tipoRegistro === "resolucao" && (
                     <p className="text-xs text-surface-500 dark:text-surface-400">
                       Já existe uma resolução aguardando avaliação. Uma nova resolução poderá ser registrada se ela
                       for recusada.
@@ -532,13 +792,10 @@ export function ChamadoDetailPage() {
                   )}
 
                   <RichTextEditor
+                    key={tipoRegistro}
                     value={texto}
                     onChange={setTexto}
-                    placeholder={
-                      tipoRegistro === "resolucao"
-                        ? "Descreva a resolução aplicada..."
-                        : "Escreva o acompanhamento do chamado..."
-                    }
+                    placeholder={TIPO_REGISTRO_PLACEHOLDERS[tipoRegistro]}
                   />
 
                   <div className="flex flex-wrap gap-2">
@@ -549,11 +806,7 @@ export function ChamadoDetailPage() {
                         isSending || isHtmlVazio(texto) || (tipoRegistro === "resolucao" && faltaCategoriaOuTecnico)
                       }
                     >
-                      {isSending
-                        ? "Enviando..."
-                        : tipoRegistro === "resolucao"
-                          ? "Registrar resolução"
-                          : "Registrar comentário"}
+                      {isSending ? "Enviando..." : TIPO_REGISTRO_LABELS[tipoRegistro]}
                     </button>
                     <button type="button" className="btn-ghost" onClick={fecharComposer}>
                       Cancelar
