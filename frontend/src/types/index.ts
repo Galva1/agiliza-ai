@@ -16,7 +16,10 @@ export type AcaoHistorico =
   | "tecnico"
   | "comentario"
   | "resolucao_proposta"
-  | "resolucao_aprovada";
+  | "resolucao_aprovada"
+  | "resolucao_recusada";
+
+export type SituacaoResolucao = "Pendente" | "Aprovada" | "Recusada";
 
 export interface Usuario {
   id: string;
@@ -80,9 +83,31 @@ export interface HistoricoChamado {
   criadoEm: string;
 }
 
+export interface ResolucaoChamado {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  descricao: string;
+  situacao: SituacaoResolucao;
+  motivoRecusa: string | null;
+  criadoEm: string;
+  avaliadoPorNome: string | null;
+  avaliadoEm: string | null;
+}
+
 export interface ChamadoDetalhe extends Chamado {
   comentarios: ComentarioChamado[];
   historico: HistoricoChamado[];
+  resolucoes: ResolucaoChamado[];
+}
+
+export interface ModeloTexto {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  ativo: boolean;
+  criadoEm: string;
+  atualizadoEm: string | null;
 }
 
 export interface Pagina<T> {

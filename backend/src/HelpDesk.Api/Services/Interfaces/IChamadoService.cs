@@ -12,5 +12,6 @@ public interface IChamadoService
     Task<ComentarioChamadoDto> AddComentarioAsync(Guid chamadoId, CreateComentarioRequest request, Guid userId, PerfilUsuario perfil);
     Task<ChamadoDto> ProporResolucaoAsync(Guid chamadoId, ProporResolucaoRequest request, Guid userId, PerfilUsuario perfil);
     Task<ChamadoDto> AprovarResolucaoAsync(Guid chamadoId, Guid userId, PerfilUsuario perfil);
+    Task<ChamadoDto> RecusarResolucaoAsync(Guid chamadoId, RecusarResolucaoRequest request, Guid userId, PerfilUsuario perfil);
     Task<PainelChamadosDto> GetPainelAsync(Guid userId, PerfilUsuario perfil, int tamanhoPagina, int paginaAbertos, int paginaAtribuidos, int paginaConcluidos);
 }

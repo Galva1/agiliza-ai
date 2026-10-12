@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<Chamado> Chamados => Set<Chamado>();
     public DbSet<ComentarioChamado> Comentarios => Set<ComentarioChamado>();
     public DbSet<HistoricoChamado> Historico => Set<HistoricoChamado>();
+    public DbSet<ResolucaoChamado> Resolucoes => Set<ResolucaoChamado>();
+    public DbSet<ModeloTexto> ModelosTexto => Set<ModeloTexto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +123,49 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(h => h.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ResolucaoChamado>(entity =>
+        {
+            entity.ToTable("resolucoes_chamado");
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Id).HasColumnName("id_resolucao");
+            entity.Property(r => r.ChamadoId).HasColumnName("id_chamado");
+            entity.Property(r => r.UsuarioId).HasColumnName("id_usuario");
+            entity.Property(r => r.Descricao).HasColumnName("ds_resolucao").IsRequired();
+            entity.Property(r => r.Situacao).HasColumnName("id_situacao").HasConversion<int>();
+            entity.Property(r => r.MotivoRecusa).HasColumnName("ds_motivo_recusa");
+            entity.Property(r => r.CriadoEm).HasColumnName("dt_cadastro");
+            entity.Property(r => r.AvaliadoPorId).HasColumnName("id_usuario_avaliador");
+            entity.Property(r => r.AvaliadoEm).HasColumnName("dt_avaliacao");
+
+            entity.HasOne(r => r.Chamado)
+                .WithMany(c => c.Resolucoes)
+                .HasForeignKey(r => r.ChamadoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.Usuario)
+                .WithMany()
+                .HasForeignKey(r => r.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.AvaliadoPor)
+                .WithMany()
+                .HasForeignKey(r => r.AvaliadoPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ModeloTexto>(entity =>
+        {
+            entity.ToTable("modelos_texto");
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Id).HasColumnName("id_modelo_texto");
+            entity.Property(m => m.Titulo).HasColumnName("nm_titulo").HasMaxLength(120).IsRequired();
+            entity.HasIndex(m => m.Titulo).IsUnique();
+            entity.Property(m => m.Conteudo).HasColumnName("ds_conteudo").IsRequired();
+            entity.Property(m => m.Ativo).HasColumnName("fl_ativo");
+            entity.Property(m => m.CriadoEm).HasColumnName("dt_cadastro");
+            entity.Property(m => m.AtualizadoEm).HasColumnName("dt_atualizacao");
         });
     }
 }

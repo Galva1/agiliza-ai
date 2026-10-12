@@ -54,6 +54,10 @@ public static class ChamadoMappings
         Historico = chamado.Historico
             .OrderByDescending(h => h.CriadoEm)
             .Select(h => h.ToDto())
+            .ToList(),
+        Resolucoes = chamado.Resolucoes
+            .OrderBy(r => r.CriadoEm)
+            .Select(r => r.ToDto())
             .ToList()
     };
 
@@ -64,5 +68,18 @@ public static class ChamadoMappings
         UsuarioNome = comentario.Usuario?.Nome ?? string.Empty,
         Mensagem = comentario.Mensagem,
         CriadoEm = comentario.CriadoEm
+    };
+
+    public static ResolucaoChamadoDto ToDto(this ResolucaoChamado resolucao) => new()
+    {
+        Id = resolucao.Id,
+        UsuarioId = resolucao.UsuarioId,
+        UsuarioNome = resolucao.Usuario?.Nome ?? string.Empty,
+        Descricao = resolucao.Descricao,
+        Situacao = resolucao.Situacao,
+        MotivoRecusa = resolucao.MotivoRecusa,
+        CriadoEm = resolucao.CriadoEm,
+        AvaliadoPorNome = resolucao.AvaliadoPor?.Nome,
+        AvaliadoEm = resolucao.AvaliadoEm
     };
 }

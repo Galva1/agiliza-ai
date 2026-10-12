@@ -24,6 +24,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IChamadoService, ChamadoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IModeloTextoService, ModeloTextoService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // ---- Auth (JWT) ----

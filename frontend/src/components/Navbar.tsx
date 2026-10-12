@@ -42,6 +42,11 @@ export function Navbar() {
             </NavLink>
           )}
           {user?.perfil === "Administrador" && (
+            <NavLink to="/layouts" className={linkClass}>
+              Layouts
+            </NavLink>
+          )}
+          {user?.perfil === "Administrador" && (
             <NavLink to="/usuarios" className={linkClass}>
               Usuários
             </NavLink>
