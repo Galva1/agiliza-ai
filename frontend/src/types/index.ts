@@ -17,7 +17,18 @@ export type AcaoHistorico =
   | "comentario"
   | "resolucao_proposta"
   | "resolucao_aprovada"
-  | "resolucao_recusada";
+  | "resolucao_recusada"
+  | "pendencia"
+  | "pendencia_concluida"
+  | "solicitacao_aprovacao"
+  | "solicitacao_aprovada"
+  | "solicitacao_recusada";
+
+export type TipoComentario = "Comentario" | "Pendencia" | "SolicitacaoAprovacao";
+
+export type ResponsavelPendencia = "Tecnico" | "Solicitante";
+
+export type SituacaoComentario = "Aberta" | "Concluida" | "Aprovada" | "Recusada";
 
 export type SituacaoResolucao = "Pendente" | "Aprovada" | "Recusada";
 
@@ -71,6 +82,12 @@ export interface ComentarioChamado {
   usuarioNome: string;
   mensagem: string;
   criadoEm: string;
+  tipo: TipoComentario;
+  responsavel: ResponsavelPendencia | null;
+  situacao: SituacaoComentario | null;
+  resposta: string | null;
+  respondidoPorNome: string | null;
+  respondidoEm: string | null;
 }
 
 export interface HistoricoChamado {

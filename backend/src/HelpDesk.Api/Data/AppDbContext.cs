@@ -1,4 +1,5 @@
 using HelpDesk.Api.Entities;
+using HelpDesk.Api.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Data;
@@ -90,6 +91,17 @@ public class AppDbContext : DbContext
             entity.Property(c => c.UsuarioId).HasColumnName("id_usuario");
             entity.Property(c => c.Mensagem).HasColumnName("ds_mensagem").IsRequired();
             entity.Property(c => c.CriadoEm).HasColumnName("dt_cadastro");
+            entity.Property(c => c.Tipo).HasColumnName("id_tipo").HasConversion<int>().HasDefaultValue(TipoComentario.Comentario);
+            entity.Property(c => c.Responsavel).HasColumnName("id_responsavel").HasConversion<int?>();
+            entity.Property(c => c.Situacao).HasColumnName("id_situacao").HasConversion<int?>();
+            entity.Property(c => c.Resposta).HasColumnName("ds_resposta");
+            entity.Property(c => c.RespondidoPorId).HasColumnName("id_usuario_resposta");
+            entity.Property(c => c.RespondidoEm).HasColumnName("dt_resposta");
+
+            entity.HasOne(c => c.RespondidoPor)
+                .WithMany()
+                .HasForeignKey(c => c.RespondidoPorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(c => c.Chamado)
                 .WithMany(c => c.Comentarios)

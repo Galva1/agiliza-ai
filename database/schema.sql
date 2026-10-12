@@ -71,7 +71,13 @@ CREATE TABLE IF NOT EXISTS comentarios_chamado (
     id_chamado      uuid NOT NULL REFERENCES chamados (id_chamado) ON DELETE CASCADE,
     id_usuario      uuid NOT NULL REFERENCES usuarios (id_usuario) ON DELETE RESTRICT,
     ds_mensagem     text NOT NULL,
-    dt_cadastro     timestamptz NOT NULL DEFAULT now()
+    dt_cadastro     timestamptz NOT NULL DEFAULT now(),
+    id_tipo         integer NOT NULL DEFAULT 1, -- 1 Comentário, 2 Pendência, 3 Solicitação de aprovação
+    id_responsavel  integer NULL,               -- Pendência: 1 Técnico, 2 Solicitante
+    id_situacao     integer NULL,               -- 1 Aberta, 2 Concluída, 3 Aprovada, 4 Recusada
+    ds_resposta     text NULL,
+    id_usuario_resposta uuid NULL REFERENCES usuarios (id_usuario) ON DELETE RESTRICT,
+    dt_resposta     timestamptz NULL
 );
 
 CREATE INDEX IF NOT EXISTS "IX_comentarios_chamado_id_chamado" ON comentarios_chamado (id_chamado);

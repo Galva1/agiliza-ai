@@ -5,7 +5,9 @@ import type {
   ComentarioChamado,
   PainelChamados,
   PrioridadeChamado,
+  ResponsavelPendencia,
   StatusChamado,
+  TipoComentario,
 } from "../types";
 
 export async function getChamados(params?: {
@@ -55,8 +57,37 @@ export async function updateChamado(
   return data;
 }
 
-export async function addChamadoComentario(id: string, mensagem: string): Promise<ComentarioChamado> {
-  const { data } = await apiClient.post<ComentarioChamado>(`/chamados/${id}/comentarios`, { mensagem });
+export async function addChamadoComentario(
+  id: string,
+  mensagem: string,
+  tipo: TipoComentario = "Comentario",
+  responsavel?: ResponsavelPendencia
+): Promise<ComentarioChamado> {
+  const { data } = await apiClient.post<ComentarioChamado>(`/chamados/${id}/comentarios`, {
+    mensagem,
+    tipo,
+    responsavel,
+  });
+  return data;
+}
+
+export async function concluirPendencia(id: string, comentarioId: string, observacao?: string): Promise<ComentarioChamado> {
+  const { data } = await apiClient.post<ComentarioChamado>(`/chamados/${id}/comentarios/${comentarioId}/concluir`, {
+    observacao,
+  });
+  return data;
+}
+
+export async function responderSolicitacao(
+  id: string,
+  comentarioId: string,
+  aprovada: boolean,
+  observacao?: string
+): Promise<ComentarioChamado> {
+  const acao = aprovada ? "aprovar" : "recusar";
+  const { data } = await apiClient.post<ComentarioChamado>(`/chamados/${id}/comentarios/${comentarioId}/${acao}`, {
+    observacao,
+  });
   return data;
 }
 

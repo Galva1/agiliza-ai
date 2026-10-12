@@ -149,6 +149,32 @@ namespace HelpDesk.Api.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ds_mensagem");
 
+                    b.Property<DateTime?>("RespondidoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dt_resposta");
+
+                    b.Property<Guid?>("RespondidoPorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_usuario_resposta");
+
+                    b.Property<int?>("Responsavel")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_responsavel");
+
+                    b.Property<string>("Resposta")
+                        .HasColumnType("text")
+                        .HasColumnName("ds_resposta");
+
+                    b.Property<int?>("Situacao")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_situacao");
+
+                    b.Property<int>("Tipo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("id_tipo");
+
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uuid")
                         .HasColumnName("id_usuario");
@@ -156,6 +182,8 @@ namespace HelpDesk.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ChamadoId");
+
+                    b.HasIndex("RespondidoPorId");
 
                     b.HasIndex("UsuarioId");
 
@@ -374,6 +402,11 @@ namespace HelpDesk.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HelpDesk.Api.Entities.Usuario", "RespondidoPor")
+                        .WithMany()
+                        .HasForeignKey("RespondidoPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("HelpDesk.Api.Entities.Usuario", "Usuario")
                         .WithMany("Comentarios")
                         .HasForeignKey("UsuarioId")
@@ -381,6 +414,8 @@ namespace HelpDesk.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Chamado");
+
+                    b.Navigation("RespondidoPor");
 
                     b.Navigation("Usuario");
                 });
